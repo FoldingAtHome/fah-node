@@ -1,0 +1,101 @@
+/******************************************************************************\
+
+                   This file is part of FoldingAtHome/fah-node
+
+        The fah-node enables secure remote access to Folding@home clients.
+                      Copyright (c) 2023, foldingathome.org
+                               All rights reserved.
+
+       This program is free software; you can redistribute it and/or modify
+       it under the terms of the GNU General Public License as published by
+        the Free Software Foundation; either version 3 of the License, or
+                       (at your option) any later version.
+
+         This program is distributed in the hope that it will be useful,
+          but WITHOUT ANY WARRANTY; without even the implied warranty of
+          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                   GNU General Public License for more details.
+
+     You should have received a copy of the GNU General Public License along
+     with this program; if not, write to the Free Software Foundation, Inc.,
+           51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+                  For information regarding this software email:
+                                 Joseph Coffland
+                          joseph@cauldrondevelopment.com
+
+\******************************************************************************/
+
+#pragma once
+
+#include <cbang/ServerApplication.h>
+#include <cbang/util/RateSet.h>
+#include <cbang/db/LevelDB.h>
+#include <cbang/json/Sink.h>
+#include <cbang/acmev2/Account.h>
+
+#include <cbang/net/IPAddress.h>
+#include <cbang/net/SessionManager.h>
+
+#include <cbang/openssl/Certificate.h>
+#include <cbang/openssl/SSLContext.h>
+#include <cbang/openssl/KeyPair.h>
+
+#include <cbang/event/Base.h>
+#include <cbang/event/DNSBase.h>
+#include <cbang/event/Client.h>
+
+#include <ostream>
+#include <string>
+#include <vector>
+
+
+namespace cb {namespace Event {class Event;}}
+
+namespace FAH {
+  class Server;
+
+  class App : public cb::ServerApplication {
+  protected:
+    cb::Event::Base base;
+    cb::Event::DNSBase dns;
+    cb::Event::Client client;
+    cb::KeyPair privateKey;
+    cb::ACMEv2::Account account;
+    cb::SessionManager sessionManager;
+    cb::RateSet stats;
+
+    Server *server;
+
+    cb::LevelDB db;
+
+    unsigned signalCount = 0;
+
+  public:
+    App();
+    ~App();
+
+    static bool _hasFeature(int feature);
+
+    cb::Event::Base    &getEventBase()      {return base;}
+    cb::Event::DNSBase &getEventDNS()       {return dns;}
+    cb::Event::Client  &getClient()         {return client;}
+    cb::SessionManager &getSessionManager() {return sessionManager;}
+    cb::RateSet        &getStats()          {return stats;}
+    Server             &getServer()         {return *server;}
+
+    cb::LevelDB getDB(const std::string &ns = "config:");
+
+    // From Application
+    int init(int argc, char *argv[]);
+    void run(); ///< Start the node server
+    void requestExit();
+
+  private:
+    void initCerts();
+    void addSignalEvent(int sig);
+    void openDB();
+    void signalEvent(cb::Event::Event &e, int signal, unsigned flags);
+    void moveLogsEvent();
+  };
+};

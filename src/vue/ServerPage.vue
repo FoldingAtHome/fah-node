@@ -1,0 +1,31 @@
+<script>
+import api from './api'
+
+
+export default {
+  data() {
+    return {
+      info: {}
+    }
+  },
+
+
+  mounted() {api.get('info').then(data => this.info = data)}
+}
+</script>
+
+<template lang="pug">
+div
+  h1: a(href="/api/info" target="_top") Server Info
+
+  table
+    template(v-for="(cat, key) in info")
+      tr: th(colspan="2") {{key}}
+
+      tr(v-for="(value, key) in cat")
+        td {{key}}
+        td {{value}}
+</template>
+
+<style lang="stylus">
+</style>

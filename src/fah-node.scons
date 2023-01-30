@@ -1,0 +1,30 @@
+import glob
+
+Import('*')
+
+env.Append(CPPPATH = ['#/src'])
+
+# libfah_node
+src = []
+dirs = ['']
+for dir in dirs:
+    src += Glob('fah/node/' + dir + '/*.cpp')
+
+# Resources
+# NOTE, resources directory in build/ must not have the same name as in src/
+res = env.Resources('resources.cpp', ['#/build/res/'])
+Precious(res)
+src.append(res)
+
+# Build Info
+info = env.BuildInfo('build_info.cpp', [])
+AlwaysBuild(info)
+
+# Build lib
+lib = env.Library('lib' + name, src)
+env.Prepend(LIBS = [lib])
+
+# Server
+prog = env.Program('#/' + name, [name + '.cpp', info]);
+
+Return('prog')

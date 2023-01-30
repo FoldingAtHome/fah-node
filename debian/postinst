@@ -1,0 +1,95 @@
+#!/bin/bash -e
+
+NAME=fah-node
+_GROUP=$NAME
+_USER=$NAME
+_ETC=/etc/$NAME
+_HOME=/var/lib/$NAME
+_LOG=/var/log/$NAME
+_SHARE=/usr/share/$NAME
+CONFIG=$_ETC/config.xml
+
+case "$1" in
+  reconfigure|configure)
+    # Create group if it does not exist
+    if ! getent group | grep -q "^$_GROUP:"; then
+      echo "Adding group '$_GROUP'."
+      groupadd $_GROUP
+    fi
+
+    # Create user if it does not exist
+    if ! getent passwd | grep -q "^$_USER:"; then
+      echo "Adding user '$_USER'."
+      useradd -r -g $_GROUP -K UMASK=002 $_USER
+    fi
+
+    # Add user to group if necessary
+    if ! groups $_USER | grep -q "\b$_GROUP\b"; then
+      echo "Adding user '$_USER' to group '$_GROUP'"
+      adduser $_USER $_GROUP
+    fi
+
+    # Create config directories
+    mkdir -m 775 -p $_ETC $_HOME/logs
+    chmod 775 $_ETC $_HOME $_HOME/logs
+    chown $_USER:$_GROUP $_ETC $_HOME $_HOME/logs
+
+    # Create config
+    if [ ! -e $CONFIG ]; then
+      echo "Creating '$CONFIG'."
+
+      # Discover public IP
+      IP=$(curl -s https://api.ipify.org)
+
+      # Discover domain name
+      DOMAIN=
+      if [ "$IP" != "" ]; then
+        if [ -x /usr/bin/dig ]; then
+          DOMAIN=$(/usr/bin/dig +short -x $IP)
+        else
+          DOMAIN=$(domainname -f $IP)
+        fi
+
+        if [[ $DOMAIN != *.* ]]; then
+          DOMAIN=
+        fi
+      fi
+
+      sed "s/EXTERNAL_IP/$IP/;s/DOMAINS/$DOMAIN/" \
+          < $_SHARE/sample-config.xml > $CONFIG
+      chmod 664 $CONFIG
+    fi
+
+    # Install the service
+    if [ ! -e /etc/systemd/system/$NAME.service ]; then
+      ln -sf $_SHARE/$NAME.service /etc/systemd/system/
+    fi
+    systemctl daemon-reload
+
+    # Link log files
+    if [ ! -e $_LOG ]; then
+      ln -fs $_HOME/logs $_LOG
+    fi
+    if [ ! -e $_LOG/log.txt ]; then
+      ln -fs $_HOME/log.txt $_LOG/
+    fi
+
+    # Start the service if it was active
+    if [ -e /tmp/$NAME.active ]; then
+      echo "Restarting $NAME service"
+      service $NAME start
+      rm -f /tmp/$NAME.active
+    fi
+
+    echo
+    echo "Next open and redirect ports by running."
+    echo
+    echo "    sudo fah-node-ports"
+    echo
+    echo "Install ``iptables-persistent`` to make firewall changes persist:"
+    echo
+    echo "    sudo apt-get install -y iptables-persistent"
+    echo
+    echo "Answer yes to saving current ipv4 rules."
+    ;;
+esac

@@ -1,24 +1,13 @@
-# Prerequisites
-*.d
-
 # Compiled Object files
 *.slo
 *.lo
 *.o
 *.obj
 
-# Precompiled Headers
-*.gch
-*.pch
-
 # Compiled Dynamic libraries
 *.so
 *.dylib
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
 
 # Compiled Static libraries
 *.lai
@@ -30,3 +19,43 @@
 *.exe
 *.out
 *.app
+
+# Build byproducts
+/build
+/config.log
+/package.txt
+/dist.txt
+/version.txt
+
+# generic files to ignore
+*~
+*.lock
+*.DS_Store
+*.swp
+*.out
+
+# Compiled python
+*.pyc
+
+# Backup files
+*~
+
+# Scons
+.sconf_temp
+.sconsign.dblite
+
+# Misc
+/config.xml
+/node_modules
+/log.txt
+/logs
+/*.pem
+/*.log
+/*.bz2
+/*.gz
+/*.deb
+/*.rpm
+/package-lock.json
+/core
+/node.leveldb
+/fah-node

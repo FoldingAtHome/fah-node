@@ -1,0 +1,38 @@
+#!/bin/bash
+
+IPTABLES=/sbin/iptables
+
+if [ "$(whoami)" != root ]; then
+  echo "Must be run as root"
+  exit 1
+fi
+
+# Allow ping
+echo "Allowing ping."
+$IPTABLES -I INPUT -p icmp --icmp-type echo-request -j ACCEPT
+
+# Allow ports
+for PORT in 80 443 8080 8084; do
+  echo "Opening port $PORT."
+  $IPTABLES -I INPUT -p tcp -m state --state NEW -m tcp --dport $PORT -j ACCEPT
+done
+
+# Forward
+echo "Redirecting port 80 to 8080."
+$IPTABLES -t nat -I PREROUTING -p tcp -m tcp --dport 80 -j DNAT \
+          --to-destination :8080
+echo "Redirecting port 443 to 8084."
+$IPTABLES -t nat -I PREROUTING -p tcp -m tcp --dport 443 -j DNAT \
+          --to-destination :8084
+
+# Enable forwarding
+echo "Enabling port forwarding"
+sysctl net.ipv4.ip_forward=1
+
+if ! grep -q '^net\.ipv4\.ip_forward=1' /etc/sysctl.conf; then
+  if grep -q '^#net\.ipv4\.ip_forward=1' /etc/sysctl.conf; then
+    sed -i 's/#\(net\.ipv4\.ip_forward=1\)/\1/' /etc/sysctl.conf
+  else
+    echo -e '\nnet.ipv4.ip_forward=1' >> /etc/sysctl.conf
+  fi
+fi

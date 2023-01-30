@@ -1,0 +1,4 @@
+<config>
+  <bind-ip v="EXTERNAL_IP"/>
+  <domains>DOMAINS</domains>
+</config>

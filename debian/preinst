@@ -1,0 +1,22 @@
+#!/bin/bash
+
+NAME=fah-node
+
+
+case "$1" in
+  install|upgrade)
+    if [ "$1" == "upgrade" ]; then
+      ACTIVE=$(systemctl is-active $NAME || true)
+
+      if [ "$ACTIVE" = "active" ]; then
+        # Stop the service
+        service $NAME stop
+
+        touch /tmp/$NAME.active
+
+      else
+        rm -f /tmp/$NAME.active
+      fi
+    fi
+    ;;
+esac

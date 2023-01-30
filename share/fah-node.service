@@ -1,0 +1,16 @@
+[Unit]
+Description=Folding@home Node
+After=network.target
+
+[Service]
+User=fah-node
+ExecStart=/usr/bin/fah-node /etc/fah-node/config.xml
+WorkingDirectory=/var/lib/fah-node
+Restart=always
+StandardOutput=null
+UMask=0002
+LimitNOFILE=50000
+LimitCORE=infinity
+
+[Install]
+WantedBy=multi-user.target

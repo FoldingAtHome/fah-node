@@ -1,0 +1,20 @@
+{
+  "name": "fah-node",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "node build.js",
+    "watch": "node build.js --watch"
+  },
+  "dependencies": {
+    "vue": "^3.2.37",
+    "vue-router": "^4.0.16"
+  },
+  "devDependencies": {
+    "chokidar": "^3.5.3",
+    "esbuild": "^0.15.12",
+    "esbuild-plugin-vue3": "^0.3.0",
+    "fs-extra": "^10.1.0",
+    "pug": "^3.0.2",
+    "stylus": "^0.58.1"
+  }
+}

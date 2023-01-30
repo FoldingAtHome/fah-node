@@ -1,0 +1,15 @@
+{
+  "acls": {
+    "/":                            {"groups": ["unauthenticated"]},
+
+    "/admin":                       {"groups": ["admin"]},
+    "/js":                          {"groups": ["admin"]},
+    "/css":                         {"groups": ["admin"]},
+    "/images":                      {"groups": ["admin"]},
+
+    "/api":                         {"groups": ["admin"]},
+    "/api/info":                    {"groups": ["unauthenticated"]},
+
+    "/api/auth/logout":             {"groups": ["unauthenticated"]}
+  }
+}

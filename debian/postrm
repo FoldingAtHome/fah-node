@@ -1,0 +1,14 @@
+#!/bin/bash -e
+
+NAME=fah-node
+_ETC=/etc/$NAME
+_RUN=/var/lib/$NAME
+_LOG=/var/log/$NAME
+
+
+case "$1" in
+  purge)
+    # Remove files
+    rm -rf $_ETC $_RUN $_LOG
+    ;;
+esac
