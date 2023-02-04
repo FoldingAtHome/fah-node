@@ -1,6 +1,12 @@
 # fah-node
 Authenticate, monitor and control your swarm of Folding@home clients remotely
 
+<p align="center">
+  <img src='docs/FAH_Node_Architecture.png' width='350'
+    alt='fah-node architecture diagram'/>
+  <p align="center">*fah-node architecture diagram*</p>
+</p>
+
 ``fah-node`` makes it possible to securely monitor and control swarms of
 Folding@home clients remotely, no matter where they are on the Internet.  A node
 can be used by more than one user at a time.  Multiple nodes are used to
@@ -9,8 +15,6 @@ distribute the network load.
 F@H clients can be configured to connect to and attempt to register with a node.
 Authorized users can approve nodes via their Folding@home account.  Once
 approved nodes will automatically appear on in your account screen.
-
-![fah-node architecture diagram](docs/FAH_Node_Architecture.png)
 
 ## Debian Linux Quick Start
 
@@ -55,18 +59,18 @@ Add the node's domain name to ``/etc/fah-node/config.xml``.
 #### Setup Google OAuth2
 Follow these steps to configure OAuth2 logins for your node:
 
- # Go to https://console.developers.google.com/apis/dashboard
- # Login to your Google account
- # Create a new project
- # Configure the OAuth consent screen
- # Click on ``Credentials`` then ``CREATE CREDENTIALS``
- # Select ``OAuth client ID``
- # Select ``Application type``: ``Web application``
- # Give your OAuth application a name
- # Add the ``Authorized JavaScript origin``: ``https://node.example.com``
- # Add the ``Authorized redirect URI``: ``https://node.example.com/login``
- # Click the ``CREATE`` button
- # Note the ``Client ID`` and ``Client secret``.
+ 1. Go to https://console.developers.google.com/apis/dashboard
+ 1. Login to your Google account
+ 1. Create a new project
+ 1. Configure the OAuth consent screen
+ 1. Click on ``Credentials`` then ``CREATE CREDENTIALS``
+ 1. Select ``OAuth client ID``
+ 1. Select ``Application type``: ``Web application``
+ 1. Give your OAuth application a name
+ 1. Add the ``Authorized JavaScript origin``: ``https://node.example.com``
+ 1. Add the ``Authorized redirect URI``: ``https://node.example.com/login``
+ 1. Click the ``CREATE`` button
+ 1. Note the ``Client ID`` and ``Client secret``.
 
 Note, Google tends to change the interface fairly often so you may have to
 adjust the above described process.
@@ -105,11 +109,13 @@ Your ``/etc/fah-node/config.xml`` should look something like this:
 #### Increase system open file limit
 As root, edit ``/etc/security/limits.conf``.  Add the following:
 
-    # For F@H AS
-    * soft nofile 10240
-    * hard nofile 10240
-    root soft nofile 10240
-    root hard nofile 10240
+```
+# For F@H AS
+* soft nofile 10240
+* hard nofile 10240
+root soft nofile 10240
+root hard nofile 10240
+```
 
 Logout and back in for new limits to take effect.
 
