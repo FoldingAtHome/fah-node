@@ -1,6 +1,17 @@
 # fah-node
 Authenticate, monitor and control your swarm of Folding@home clients remotely
 
+``fah-node`` makes it possible to securely monitor and control swarms of
+Folding@home clients remotely, no matter where they are on the Internet.  A node
+can be used by more than one user at a time.  Multiple nodes are used to
+distribute the network load.
+
+F@H clients can be configured to connect to and attempt to register with a node.
+Authorized users can approve nodes via their Folding@home account.  Once
+approved nodes will automatically appear on in your account screen.
+
+![fah-node architecture diagram](docs/FAH_Node_Architecture.png)
+
 ## Debian Linux Quick Start
 
 ### Build
@@ -35,7 +46,7 @@ sudo apt-get install -y iptables-persistent
 
 ### Setup
 #### Domain name
-Add the node's domain name to ``config.xml``.
+Add the node's domain name to ``/etc/fah-node/config.xml``.
 
 ```xml
   <domains>node.example.com</domains>
@@ -68,6 +79,29 @@ Add the following to your ``config.xml``:
   <google-redirect-base>https://node.example.com</google-redirect-base>
 ```
 
+#### Add an admin account
+
+Add one or more email addresses which will have admin access to your node:
+
+```xml
+  <admins>admin@gmail.com</admins>
+```
+
+Note, admin email addresses must match the OAuth login.
+
+#### Complete ``config.xml``
+Your ``/etc/fah-node/config.xml`` should look something like this:
+
+```xml
+<config>
+  <admins>admin@gmail.com</admins>
+  <domains>node.example.com</domains>
+  <google-client-id>YOUR_CLIENT_ID</google-client-id>
+  <google-client-secret>YOUR_CLIENT_SECRET</google-client-secret>
+  <google-redirect-base>https://node.example.com</google-redirect-base>
+</config>
+```
+
 #### Increase system open file limit
 As root, edit ``/etc/security/limits.conf``.  Add the following:
 
@@ -79,4 +113,23 @@ As root, edit ``/etc/security/limits.conf``.  Add the following:
 
 Logout and back in for new limits to take effect.
 
-## Architecture
+#### Start the node
+Start the node with:
+
+```
+sudo service fah-node start
+```
+
+Monitor the log file:
+
+```
+sudo tail -F -n 1000 /var/log/fah-node/log.txt
+```
+
+#### Login to the node
+
+To login visit your node's web page.  E.g. https://node.example.com/.  Then
+click on the protein icon to login.  If everything is setup correctly you should
+reach the admin web page.
+
+## Security

@@ -1,0 +1,38 @@
+//-/////////////////////////////////////////////////////////////////////////////
+//-                                                                           //
+//-                     Copyright 2023. foldingathome.org                     //
+//-                            All Rights Reserved.                           //
+//-                                                                           //
+//-               For information regarding this software email:              //
+//-                              Joseph Coffland                              //
+//-                       joseph@cauldrondevelopment.com                      //
+//-                                                                           //
+//-/////////////////////////////////////////////////////////////////////////////
+
+doctype html
+html(lang='en')
+  head
+    title Login - Folding@home Node Server
+    link(rel='icon', href='/favicon.ico')
+    meta(charset='utf-8')
+
+    // http://youtube.com/watch?v=5NNOrp_83RU
+
+    script(src='//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js')
+
+    script.
+      $(() => {
+        $('#logout').click(e => {
+          $.get('/api/logout').always(() => location.assign('/'))
+        })
+
+        let user = decodeURIComponent(location.search.substr(1))
+        if (user) $('<h2>').text('Welcome ' + user).prependTo('body')
+     })
+
+  body
+    p.
+      You are currently logged in but your account does not have access to this
+      server.
+
+    button#logout Logout

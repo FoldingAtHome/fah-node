@@ -161,17 +161,19 @@ void Server::initHandlers() {
 
     addHandler("/", root + "/index.html");
     addHandler("/admin.*", root + "/admin.html");
+    addHandler("/login",   root + "/login.html");
     addHandler(root);
 
   } else {
     addHandler("/", Node::resource0.get("http/index.html"));
     addHandler("/admin.*", Node::resource0.get("http/admin.html"));
+    addHandler("/login",   Node::resource0.get("http/login.html"));
     addHandler(Node::resource0.get("http"));
   }
 
   if (options["http-pub"].hasValue())
-    addHandler(HTTP_GET, "/pub/.*",
-               new Event::FileHandler(options["http-pub"], 5));
+    addHandler(
+      HTTP_GET, "/pub/.*", new Event::FileHandler(options["http-pub"], 5));
 }
 
 

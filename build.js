@@ -10,6 +10,7 @@ const outdir = 'build/res'
 const watchPaths = [
   'src/index.pug',
   'src/admin.pug',
+  'src/login.pug',
   'src/vue'
 ]
 
@@ -47,7 +48,7 @@ async function build() {
     if (output.endsWith('.css')) vars.css = href
   }
 
-  for (let name of ['index', 'admin']) {
+  for (let name of ['index', 'admin', 'login']) {
     let html = pug.compileFile('src/' + name + '.pug')(vars)
     await fs.writeFile(outdir + '/http/' + name + '.html', html)
   }
