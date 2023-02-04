@@ -233,7 +233,7 @@ void App::initCerts() {
       [this, &sslCtx] (ACMEv2::KeyCert &keyCert) {
         LOG_INFO(1, "Updated web certificate");
         auto &chain = keyCert.getChain();
-        getDB("config:").set("chain", chain.toString());
+        getDB().set("web-chain", chain.toString());
         sslCtx.useCertificateChain(chain);
       };
 
