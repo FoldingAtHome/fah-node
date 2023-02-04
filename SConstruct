@@ -15,18 +15,22 @@ env.CBAddVariables(
 
 conf = env.CBConfigure()
 
-# Settings
-name    = 'fah-node'
-version = json.load(open('package.json', 'r'))['version']
+# Package info
+with open('package.json', 'r') as f:
+  package_info = json.load(f)
+
+name              = package_info['name']
+version           = package_info['version']
+description       = package_info['description']
+short_description = description
 
 # Config vars
-author = 'Joseph Coffland <joseph@cauldrondevelopment.com>'
 env.Replace(PACKAGE_VERSION   = version)
-env.Replace(PACKAGE_AUTHOR    = author)
-env.Replace(PACKAGE_ORG       = 'foldingathome.org')
-env.Replace(PACKAGE_COPYRIGHT = 'foldingathome.org, 2023')
-env.Replace(PACKAGE_HOMEPAGE  = 'https://foldingathome.org/')
-env.Replace(PACKAGE_LICENSE   = 'GPL 3+')
+env.Replace(PACKAGE_AUTHOR    = package_info['author'])
+env.Replace(PACKAGE_ORG       = package_info['org'])
+env.Replace(PACKAGE_COPYRIGHT = package_info["copyright"])
+env.Replace(PACKAGE_HOMEPAGE  = package_info["homepage"])
+env.Replace(PACKAGE_LICENSE   = package_info["license"])
 env.Replace(RESOURCES_NS      = 'FAH::Node')
 env.Replace(BUILD_INFO_NS     = 'FAH::BuildInfo')
 
@@ -63,28 +67,16 @@ tar  = env.TarBZ2Dist(name, docs + [name, 'scripts'])
 Alias('dist', tar)
 AlwaysBuild(tar)
 
-# TODO Complete descriptions
-description = '''\
-Folding@home is a distributed computing project using volunteered computer
-resources.
-
-fah-node can be used to authenticate, monitor and control your swarm of
-Folding@home clients remotely.
-'''
-
-short_description = description
-
-
 # Package
 if 'package' in COMMAND_LINE_TARGETS:
   pkg = env.Packager(
     name,
     version = version,
-    maintainer = author,
-    vendor = 'foldingathome.org',
-    url = 'https://foldingathome.org/',
+    maintainer = package_info['author'],
+    vendor = package_info['org'],
+    url = package_info['homepage'],
     license = 'copyright',
-    bug_url = 'https://github.com/FoldingAtHome/fah-node/issues',
+    bug_url = package_info['bugs']['url'],
     summary = 'Folding@home Node',
     description = description,
     prefix = '/usr',

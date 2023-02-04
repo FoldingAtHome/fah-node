@@ -68,6 +68,10 @@ App::App() :
   // Init Debugger before threads start
   Debugger::getStackTrace();
 
+  // Configure commandline
+  cmdLine.setAllowConfigAsFirstArg(true);
+  cmdLine.setAllowPositionalArgs(false);
+
   // Setup ACMEv2
   account.addOptions(options);
   options["acmev2-base"].setDefault(ACMEv2::letsencrypt_base);
