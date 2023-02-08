@@ -50,7 +50,7 @@ if not env.GetOption('clean') and not 'package' in COMMAND_LINE_TARGETS:
 conf.Finish()
 
 # Resources
-if not 'package' in COMMAND_LINE_TARGETS:
+if not ('package' in COMMAND_LINE_TARGETS or 'dist' in COMMAND_LINE_TARGETS):
   from subprocess import check_call
   check_call(['npm', 'install'])
   check_call(['npm', 'run', 'build'])
@@ -62,7 +62,7 @@ Default(prog)
 Clean(prog, ['build', 'config.log'])
 
 # Dist
-docs = ['README.md', 'CHANGELOG.md']
+docs = ['README.md', 'CHANGELOG.md', 'LICENSE']
 tar  = env.TarBZ2Dist(name, docs + [name, 'scripts'])
 Alias('dist', tar)
 AlwaysBuild(tar)
@@ -75,7 +75,7 @@ if 'package' in COMMAND_LINE_TARGETS:
     maintainer = package_info['author'],
     vendor = package_info['org'],
     url = package_info['homepage'],
-    license = 'copyright',
+    license = 'LICENSE',
     bug_url = package_info['bugs']['url'],
     summary = 'Folding@home Node',
     description = description,
@@ -93,7 +93,7 @@ if 'package' in COMMAND_LINE_TARGETS:
     deb_depends = 'debconf | debconf-2.0, libc6, bzip2, zlib1g, systemd',
     deb_pre_depends = 'adduser, ssl-cert, curl',
     deb_priority = 'optional',
-    )
+  )
 
   AlwaysBuild(pkg)
   env.Alias('package', pkg)

@@ -139,3 +139,69 @@ click on the protein icon to login.  If everything is setup correctly you should
 reach the admin web page.
 
 ## Security
+
+fah-node makes it possible to control many folding clients remotely so security
+is of the utmost importance.  To ensure that only authorized persons can access
+the clients in your swarm, ``fah-node`` has several layers of security.
+
+### Limited actions
+
+The first line of defence is to limit what actions can be performed on the
+remote clients in your swarm.  Authorized users can perform only the following
+actions on clients in the swarm via a ``fah-node``:
+
+ * Start and stop folding.
+ * Change the client's user, project or resource usage settings.
+ * View the client's log or protein snapshots.
+
+### Client Authentication
+
+To prevent unauthorized clients from joining your swarm, each client must be
+configured with a swarm token.  A swarm token, is a time limited small file that
+contains secret information which can only be obtained via your Folding@home
+login.  The token allows one or more more clients to request to join your swarm.
+These clients will appear on your account at which point you can approve or
+disapprove their membership in the swarm.
+
+### Isolating the swarm from itself
+
+Since the clients in your swarm can exist anywhere on the Internet, it is
+possible they could be compromised through some other route.  For this reason,
+swarm members are only able to report their status.  In the worst case,
+a compromised client could report false information about itself.
+
+### Isolation from the node
+
+Even if the machine a ``fah-node`` runs on was compromised or it is run by
+someone you do not trust, your swarm is still protected.  The token used
+to authenticate your clients with the swarm sets up a secure communication
+channel that ensures the node itself cannot tamper with or evesdrop on the
+communication between your F@H account and your swarm.  The worst a hostile
+``fah-node`` could do is deny remote access to your swarm.
+
+### Folding@home account login
+
+Your F@H account is secured via the OAuth2 protocol.  This the industry standard
+security protocol for "federated logins".  It allows you to login to your
+F@H account using an account with Google or other OAuth2 provider.
+
+However, anyone who gains access to your OAuth2 account will have the ability
+to control your swarm.  If this occurs, they will be able to perform
+the limited actions described above.  If you believe your account has been
+compromised you can disassociate all your swarm clients and/or close your
+Folding@home account.
+
+### End-to-end double encrypted communication
+
+Each of the following communication channels in the swarm are encrypted using
+the HTTPS protocol:
+
+  - Browser     <-> F@H account
+  - F@H account <-> fah-node
+  - F@H client  <-> fah-node
+
+HTTPS is the protocol used by banks and shopping sites to secure the Internet.
+
+In addition, communication from your browser to your swarm clients via the
+``fah-node`` is double encrypted using RSA and AES.  This prevents the
+``fah-node`` itself from being able to control or monitor your swarm.
