@@ -14,7 +14,7 @@ distribute the network load.
 
 F@H clients can be configured to connect to and attempt to register with a node.
 Authorized users can approve nodes via their Folding@home account.  Once
-approved nodes will automatically appear on in your account screen.
+approved, nodes will automatically appear on your account screen.
 
 ## Debian Linux Quick Start
 
@@ -123,7 +123,7 @@ Logout and back in for new limits to take effect.
 Start the node with:
 
 ```
-sudo service fah-node start
+sudo systemctl start fah-node
 ```
 
 Monitor the log file:
@@ -134,19 +134,19 @@ sudo tail -F -n 1000 /var/log/fah-node/log.txt
 
 #### Login to the node
 
-To login visit your node's web page.  E.g. https://node.example.com/.  Then
-click on the protein icon to login.  If everything is setup correctly you should
+To login, visit your node's web page.  E.g. https://node.example.com/.  Then
+click on the protein icon to login.  If everything is setup correctly, you should
 reach the admin web page.
 
 ## Security
 
-fah-node makes it possible to control many folding clients remotely so security
+fah-node makes it possible to control many folding clients remotely, so security
 is of the utmost importance.  To ensure that only authorized persons can access
 the clients in your swarm, ``fah-node`` has several layers of security.
 
 ### Limited actions
 
-The first line of defence is to limit what actions can be performed on the
+The first line of defense is to limit what actions can be performed on the
 remote clients in your swarm.  Authorized users can perform only the following
 actions on clients in the swarm via a ``fah-node``:
 
@@ -157,10 +157,10 @@ actions on clients in the swarm via a ``fah-node``:
 ### Client Authentication
 
 To prevent unauthorized clients from joining your swarm, each client must be
-configured with a swarm token.  A swarm token, is a time limited small file that
+configured with a swarm token.  A swarm token is a time-limited small file that
 contains secret information which can only be obtained via your Folding@home
 login.  The token allows one or more more clients to request to join your swarm.
-These clients will appear on your account at which point you can approve or
+These clients will appear on your account, at which point you can approve or
 disapprove their membership in the swarm.
 
 ### Isolating the swarm from itself
@@ -175,7 +175,7 @@ a compromised client could report false information about itself.
 Even if the machine a ``fah-node`` runs on was compromised or it is run by
 someone you do not trust, your swarm is still protected.  The token used
 to authenticate your clients with the swarm sets up a secure communication
-channel that ensures the node itself cannot tamper with or evesdrop on the
+channel that ensures the node itself cannot tamper with or eavesdrop on the
 communication between your F@H account and your swarm.  The worst a hostile
 ``fah-node`` could do is deny remote access to your swarm.
 
@@ -188,7 +188,7 @@ F@H account using an account with Google or other OAuth2 provider.
 However, anyone who gains access to your OAuth2 account will have the ability
 to control your swarm.  If this occurs, they will be able to perform
 the limited actions described above.  If you believe your account has been
-compromised you can disassociate all your swarm clients and/or close your
+compromised, you can disassociate all your swarm clients and/or close your
 Folding@home account.
 
 ### End-to-end double encrypted communication
