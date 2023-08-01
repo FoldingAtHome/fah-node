@@ -26,22 +26,56 @@
 
 \******************************************************************************/
 
-#include <fah/node/App.h>
+#include "Account.h"
+#include "AccountWS.h"
+#include "ClientWS.h"
 
-#include <cbang/ApplicationMain.h>
-#include <cbang/event/Event.h>
-#include <cbang/event/Base.h>
-
-#include <event2/thread.h>
+using namespace std;
+using namespace cb;
+using namespace FAH::Node;
 
 
-int main(int argc, char *argv[]) {
-#ifdef DEBUG
-  cb::Event::Event::enableDebugMode();
-#endif
+const SmartPointer<AccountWS> &Account::getAccount(uint64_t id) const {
+  auto it = accounts.find(id);
+  if (it == accounts.end()) THROW("Account with ID '" << id << "' not found");
+  return it->second;
+}
 
-  evthread_use_pthreads();
-  cb::Event::Base::enableThreads();
 
-  return cb::doApplication<FAH::Node::App>(argc, argv);
+const SmartPointer<ClientWS> &Account::getClient(const string &id) const {
+  auto it = clients.find(id);
+  if (it == clients.end()) THROW("Client with ID '" << id << "' not found");
+  return it->second;
+}
+
+
+void Account::add(const SmartPointer<AccountWS> &account) {
+  accounts[account->getConnID()] = account;
+
+  // Send "client" messages for each registered client
+  for (auto pair: clients)
+    account->notify(*pair.second);
+}
+
+
+void Account::add(const SmartPointer<ClientWS> &client) {
+  // TODO check that client is linked to this account
+
+  clients[client->getID()] = client;
+
+  // Notify connected accounts
+  for (auto pair: accounts)
+    pair.second->notify(*client);
+}
+
+
+void Account::remove(const AccountWS &account) {
+  // TODO Send "disconnect" messages to each connected client
+  accounts.erase(account.getConnID());
+}
+
+
+void Account::remove(const ClientWS &client) {
+  // TODO Send "disconnect" message to any connected accounts
+  clients.erase(client.getID());
 }

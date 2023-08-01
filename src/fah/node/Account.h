@@ -26,22 +26,39 @@
 
 \******************************************************************************/
 
-#include <fah/node/App.h>
+#pragma once
 
-#include <cbang/ApplicationMain.h>
-#include <cbang/event/Event.h>
-#include <cbang/event/Base.h>
+#include <cbang/SmartPointer.h>
 
-#include <event2/thread.h>
+#include <cstdint>
+#include <map>
 
 
-int main(int argc, char *argv[]) {
-#ifdef DEBUG
-  cb::Event::Event::enableDebugMode();
-#endif
+namespace FAH {
+  namespace Node {
+    class AccountWS;
+    class ClientWS;
 
-  evthread_use_pthreads();
-  cb::Event::Base::enableThreads();
+    class Account {
+      std::string id;
 
-  return cb::doApplication<FAH::Node::App>(argc, argv);
+      typedef cb::SmartPointer<AccountWS> AccountWSPtr;
+      typedef cb::SmartPointer<ClientWS>  ClientWSPtr;
+      std::map<uint64_t,    AccountWSPtr> accounts;
+      std::map<std::string, ClientWSPtr>  clients;
+
+    public:
+      Account(const std::string &id) : id(id) {}
+
+      const std::string &getID() const {return id;}
+      bool isEmpty() const {return accounts.empty() && clients.empty();}
+
+      const AccountWSPtr &getAccount(uint64_t id) const;
+      const ClientWSPtr  &getClient (const std::string &id) const;
+      void add(const AccountWSPtr &account);
+      void add(const ClientWSPtr  &client);
+      void remove(const AccountWS &account);
+      void remove(const ClientWS  &client);
+    };
+  }
 }

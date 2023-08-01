@@ -28,6 +28,9 @@
 
 #include "Server.h"
 #include "App.h"
+#include "Account.h"
+#include "ClientWS.h"
+#include "AccountWS.h"
 
 #include <cbang/Exception.h>
 #include <cbang/Catch.h>
@@ -54,7 +57,7 @@
 
 using namespace std;
 using namespace cb;
-using namespace FAH;
+using namespace FAH::Node;
 
 namespace FAH {
   namespace Node {
@@ -111,6 +114,17 @@ Server::Server(App &app) :
 
 
 Server::~Server() {}
+
+
+const SmartPointer<RemoteWS> &Server::add(
+  const SmartPointer<RemoteWS> &remote) {
+  return remotes[remote->getConnID()] = remote;
+}
+
+
+void Server::remove(const RemoteWS &remote) {
+  remotes.erase(remote.getConnID());
+}
 
 
 void Server::init(SSLContext &ctx) {
@@ -203,6 +217,12 @@ void Server::init() {
 
 SmartPointer<Event::Request> Server::createRequest
 (Event::RequestMethod method, const URI &uri, const Version &version) {
+  if (method == HTTP_GET && uri.getPath() == "/ws/client")
+    return add(new ClientWS(app, uri, version));
+
+  if (method == HTTP_GET && uri.getPath() == "/ws/account")
+    return add(new AccountWS(app, uri, version));
+
   return Event::WebServer::createRequest(method, uri, version);
 }
 
@@ -227,7 +247,7 @@ bool Server::apiCORS(Event::Request &req) {
 }
 
 
-bool Server::apiNotFound(cb::Event::Request &req) {
+bool Server::apiNotFound(Event::Request &req) {
   req.sendJSONError(HTTP_NOT_FOUND, "API endpoint not found");
   return true;
 }

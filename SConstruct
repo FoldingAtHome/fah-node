@@ -32,7 +32,7 @@ env.Replace(PACKAGE_COPYRIGHT = package_info["copyright"])
 env.Replace(PACKAGE_HOMEPAGE  = package_info["homepage"])
 env.Replace(PACKAGE_LICENSE   = package_info["license"])
 env.Replace(RESOURCES_NS      = 'FAH::Node')
-env.Replace(BUILD_INFO_NS     = 'FAH::BuildInfo')
+env.Replace(BUILD_INFO_NS     = 'FAH::Node::BuildInfo')
 
 if not env.GetOption('clean') and not 'package' in COMMAND_LINE_TARGETS:
   conf.CBConfig('compiler')

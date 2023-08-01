@@ -28,62 +28,69 @@
 
 #pragma once
 
-#include <cbang/StdTypes.h>
-
-#include <cbang/net/IPAddress.h>
 #include <cbang/event/WebServer.h>
 #include <cbang/util/ACLSet.h>
 #include <cbang/json/JSON.h>
-#include <cbang/openssl/CertificateStore.h>
 #include <cbang/auth/GoogleOAuth2.h>
 
+#include <cstdint>
 #include <string>
-#include <functional>
+#include <map>
 
 
 namespace cb {class Options;}
 
 namespace FAH {
-  class App;
-  class Context;
-  class Job;
+  namespace Node {
+    class App;
+    class RemoteWS;
 
-  class Server : public cb::Event::WebServer,
-                 public cb::Event::HTTPHandlerFactory {
-  protected:
-    App &app;
-    cb::Options &options;
-    cb::GoogleOAuth2 googleOAuth2;
-    cb::ACLSet aclSet;
+    class Server : public cb::Event::WebServer,
+                   public cb::Event::HTTPHandlerFactory {
+    protected:
+      App &app;
+      cb::Options &options;
+      cb::GoogleOAuth2 googleOAuth2;
+      cb::ACLSet aclSet;
 
-  public:
-    Server(App &app);
-    ~Server();
+      typedef cb::SmartPointer<RemoteWS> RemoteWSPtr;
+      std::map<uint64_t, RemoteWSPtr> remotes;
 
-    void init(cb::SSLContext &ctx);
-    void initHandlers();
+    public:
+      Server(App &app);
+      ~Server();
 
-    // From cb::Event::WebServer
-    void init();
+      const RemoteWSPtr &add(const RemoteWSPtr &remote);
+      void remove(const RemoteWS &remote);
 
-    // From cb::Event::HTTPHandler
-    cb::SmartPointer<cb::Event::Request> createRequest
-    (cb::Event::RequestMethod method, const cb::URI &uri,
-     const cb::Version &version);
+      void init(cb::SSLContext &ctx);
+      void initHandlers();
 
-  protected:
-    bool apiCORS(         cb::Event::Request &req);
-    bool apiNotFound(     cb::Event::Request &req);
-    bool apiXFrameOptions(cb::Event::Request &req);
-    void apiLogout(     cb::Event::Request &req, const cb::JSON::ValuePtr &msg);
-    void apiServer(     cb::Event::Request &req, const cb::JSON::ValuePtr &msg);
-    void apiInfo(       cb::Event::Request &req, const cb::JSON::ValuePtr &msg);
-    void apiStats(      cb::Event::Request &req, const cb::JSON::ValuePtr &msg);
-    void apiConnections(cb::Event::Request &req, const cb::JSON::ValuePtr &msg);
-    void apiHelp(       cb::Event::Request &req, const cb::JSON::ValuePtr &msg);
+      // From cb::Event::WebServer
+      void init();
 
-    // Webpage handler methods
-    bool forceSecure(cb::Event::Request &req);
-    bool loginPage(  cb::Event::Request &req);
-  };
+      // From cb::Event::HTTPHandler
+      cb::SmartPointer<cb::Event::Request> createRequest
+      (cb::Event::RequestMethod method, const cb::URI &uri,
+       const cb::Version &version);
+
+    protected:
+      typedef cb::Event::Request EReq;
+      typedef cb::JSON::ValuePtr JVP;
+
+      bool apiCORS         (EReq &req);
+      bool apiNotFound     (EReq &req);
+      bool apiXFrameOptions(EReq &req);
+      void apiLogout       (EReq &req, const JVP &msg);
+      void apiServer       (EReq &req, const JVP &msg);
+      void apiInfo         (EReq &req, const JVP &msg);
+      void apiStats        (EReq &req, const JVP &msg);
+      void apiConnections  (EReq &req, const JVP &msg);
+      void apiHelp         (EReq &req, const JVP &msg);
+
+      // Webpage handler methods
+      bool forceSecure     (EReq &req);
+      bool loginPage       (EReq &req);
+    };
+  }
 }

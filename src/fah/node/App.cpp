@@ -29,6 +29,7 @@
 #include "App.h"
 
 #include "Server.h"
+#include "Account.h"
 
 #include <cbang/Catch.h>
 #include <cbang/Zap.h>
@@ -46,16 +47,18 @@
 #include <cbang/debug/Debugger.h>
 #include <cbang/openssl/KeyGenPacifier.h>
 
-#include <stdlib.h>
-#include <signal.h>
+#include <cstdlib>
+#include <csignal>
 
 using namespace std;
 using namespace cb;
-using namespace FAH;
+using namespace FAH::Node;
 
 namespace FAH {
-  namespace BuildInfo {
-    void addBuildInfo(const char *category);
+  namespace Node {
+    namespace BuildInfo {
+      void addBuildInfo(const char *category);
+    }
   }
 }
 
@@ -143,6 +146,20 @@ bool App::_hasFeature(int feature) {
   default: return ServerApplication::_hasFeature(feature);
   }
 }
+
+
+const SmartPointer<Account> &App::getAccount(const string &id) {
+  // Clean up old accounts
+  if (accountsClean == accounts.end()) accountsClean = accounts.begin();
+  if (accountsClean != accounts.end() && accountsClean->second->isEmpty())
+    accountsClean = accounts.erase(accountsClean);
+
+  // Get Account
+  auto it = accounts.find(id);
+  if (it == accounts.end()) return accounts[id] = new Account(id);
+  return it->second;
+}
+
 
 LevelDB App::getDB(const string &ns) {return db.ns(ns);}
 

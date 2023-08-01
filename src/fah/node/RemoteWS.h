@@ -26,22 +26,27 @@
 
 \******************************************************************************/
 
-#include <fah/node/App.h>
+#pragma once
 
-#include <cbang/ApplicationMain.h>
-#include <cbang/event/Event.h>
-#include <cbang/event/Base.h>
-
-#include <event2/thread.h>
+#include <cbang/event/JSONWebsocket.h>
+#include <cbang/openssl/KeyPair.h>
 
 
-int main(int argc, char *argv[]) {
-#ifdef DEBUG
-  cb::Event::Event::enableDebugMode();
-#endif
+namespace FAH {
+  namespace Node {
+    class App;
 
-  evthread_use_pthreads();
-  cb::Event::Base::enableThreads();
+    class RemoteWS : public cb::Event::JSONWebsocket {
+    protected:
+      App &app;
 
-  return cb::doApplication<FAH::Node::App>(argc, argv);
+    public:
+      RemoteWS(App &app, const cb::URI &uri, const cb::Version &version);
+
+      uint64_t getConnID() const {return Request::getID();}
+
+      // From cb::Event::Request
+      void onComplete();
+    };
+  }
 }

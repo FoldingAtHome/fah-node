@@ -26,22 +26,67 @@
 
 \******************************************************************************/
 
-#include <fah/node/App.h>
+#include "ClientWS.h"
+#include "App.h"
+#include "Account.h"
 
-#include <cbang/ApplicationMain.h>
-#include <cbang/event/Event.h>
-#include <cbang/event/Base.h>
+#include <cbang/Catch.h>
+#include <cbang/openssl/Digest.h>
 
-#include <event2/thread.h>
+using namespace std;
+using namespace cb;
+using namespace FAH::Node;
 
 
-int main(int argc, char *argv[]) {
-#ifdef DEBUG
-  cb::Event::Event::enableDebugMode();
-#endif
+ClientWS::~ClientWS() {}
 
-  evthread_use_pthreads();
-  cb::Event::Base::enableThreads();
 
-  return cb::doApplication<FAH::Node::App>(argc, argv);
+void ClientWS::connect(const JSON::ValuePtr &msg) {
+  send(*msg);
+}
+
+
+void ClientWS::disconnect(uint64_t ch) {
+  JSON::ValuePtr msg = new JSON::Dict;
+  msg->insert("type", "disconnect");
+  msg->insert("ch",   ch);
+  send(*msg);
+}
+
+
+void ClientWS::onMessage(const JSON::ValuePtr &msg) {
+  try {
+    string type = msg->getString("type", "");
+
+    if (type == "register") {
+      account = app.getAccount(msg->getString("account"));
+      pubKey  = new KeyPair(msg->getString("pub"));
+      id      = Digest::base64(pubKey->getPublic().toBinString(), "sha256");
+      account->add(this);
+
+      return;
+    }
+
+    if (account.isNull()) THROW("Client not registered");
+
+    if (type == "message") {
+      // TODO Forward "message" to account channel
+      return;
+    }
+
+    THROW("Invalid message type '" << type << "'");
+  } CATCH_ERROR;
+
+  close(Event::WebsockStatus::WS_STATUS_UNACCEPTABLE);
+}
+
+
+void ClientWS::onOpen() {
+  // TODO Timeout if client does not "register"
+}
+
+
+void ClientWS::onComplete() {
+  if (account.isSet()) account->remove(*this);
+  RemoteWS::onComplete();
 }

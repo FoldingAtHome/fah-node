@@ -53,49 +53,57 @@
 namespace cb {namespace Event {class Event;}}
 
 namespace FAH {
-  class Server;
+  namespace Node {
+    class Server;
+    class Account;
 
-  class App : public cb::ServerApplication {
-  protected:
-    cb::Event::Base base;
-    cb::Event::DNSBase dns;
-    cb::Event::Client client;
-    cb::KeyPair privateKey;
-    cb::ACMEv2::Account account;
-    cb::SessionManager sessionManager;
-    cb::RateSet stats;
+    class App : public cb::ServerApplication {
+    protected:
+      cb::Event::Base base;
+      cb::Event::DNSBase dns;
+      cb::Event::Client client;
+      cb::KeyPair privateKey;
+      cb::ACMEv2::Account account;
+      cb::SessionManager sessionManager;
+      cb::RateSet stats;
 
-    Server *server;
+      Server *server;
+      typedef std::map<std::string, cb::SmartPointer<Account> > accounts_t;
+      accounts_t accounts;
+      accounts_t::iterator accountsClean = accounts.end();
 
-    cb::LevelDB db;
+      cb::LevelDB db;
 
-    unsigned signalCount = 0;
+      unsigned signalCount = 0;
 
-  public:
-    App();
-    ~App();
+    public:
+      App();
+      ~App();
 
-    static bool _hasFeature(int feature);
+      static bool _hasFeature(int feature);
 
-    cb::Event::Base    &getEventBase()      {return base;}
-    cb::Event::DNSBase &getEventDNS()       {return dns;}
-    cb::Event::Client  &getClient()         {return client;}
-    cb::SessionManager &getSessionManager() {return sessionManager;}
-    cb::RateSet        &getStats()          {return stats;}
-    Server             &getServer()         {return *server;}
+      cb::Event::Base    &getEventBase()      {return base;}
+      cb::Event::DNSBase &getEventDNS()       {return dns;}
+      cb::Event::Client  &getClient()         {return client;}
+      cb::SessionManager &getSessionManager() {return sessionManager;}
+      cb::RateSet        &getStats()          {return stats;}
+      Server             &getServer()         {return *server;}
 
-    cb::LevelDB getDB(const std::string &ns = "config:");
+      const cb::SmartPointer<Account> &getAccount(const std::string &id);
 
-    // From Application
-    int init(int argc, char *argv[]);
-    void run(); ///< Start the node server
-    void requestExit();
+      cb::LevelDB getDB(const std::string &ns = "config:");
 
-  private:
-    void initCerts();
-    void addSignalEvent(int sig);
-    void openDB();
-    void signalEvent(cb::Event::Event &e, int signal, unsigned flags);
-    void moveLogsEvent();
-  };
-};
+      // From Application
+      int init(int argc, char *argv[]);
+      void run(); ///< Start the node server
+      void requestExit();
+
+    private:
+      void initCerts();
+      void addSignalEvent(int sig);
+      void openDB();
+      void signalEvent(cb::Event::Event &e, int signal, unsigned flags);
+      void moveLogsEvent();
+    };
+  }
+}

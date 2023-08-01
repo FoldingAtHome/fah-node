@@ -26,22 +26,38 @@
 
 \******************************************************************************/
 
-#include <fah/node/App.h>
+#pragma once
 
-#include <cbang/ApplicationMain.h>
-#include <cbang/event/Event.h>
-#include <cbang/event/Base.h>
+#include "RemoteWS.h"
 
-#include <event2/thread.h>
+#include <cbang/SmartPointer.h>
+#include <cbang/openssl/Certificate.h>
 
 
-int main(int argc, char *argv[]) {
-#ifdef DEBUG
-  cb::Event::Event::enableDebugMode();
-#endif
+namespace FAH {
+  namespace Node {
+    class Account;
+    class ClientWS;
 
-  evthread_use_pthreads();
-  cb::Event::Base::enableThreads();
+    class AccountWS : public RemoteWS {
+      cb::SmartPointer<Account> account;
+      cb::SmartPointer<cb::Certificate> cert;
+      std::string chain; // Certificate chain
 
-  return cb::doApplication<FAH::Node::App>(argc, argv);
+    public:
+      using RemoteWS::RemoteWS;
+      ~AccountWS();
+
+      void notify(const ClientWS &client);
+
+      // From cb::Event::JSONWebsocket
+      void onMessage(const cb::JSON::ValuePtr &msg);
+
+      // From cb::Event::Websocket
+      void onOpen();
+
+      // From cb::Event::Request
+      void onComplete();
+    };
+  }
 }

@@ -26,22 +26,38 @@
 
 \******************************************************************************/
 
-#include <fah/node/App.h>
+#pragma once
 
-#include <cbang/ApplicationMain.h>
-#include <cbang/event/Event.h>
-#include <cbang/event/Base.h>
-
-#include <event2/thread.h>
+#include "RemoteWS.h"
 
 
-int main(int argc, char *argv[]) {
-#ifdef DEBUG
-  cb::Event::Event::enableDebugMode();
-#endif
+namespace FAH {
+  namespace Node {
+    class Account;
 
-  evthread_use_pthreads();
-  cb::Event::Base::enableThreads();
+    class ClientWS : public RemoteWS {
+      cb::SmartPointer<Account> account;
+      cb::SmartPointer<cb::KeyPair> pubKey;
+      std::string id;
 
-  return cb::doApplication<FAH::Node::App>(argc, argv);
+    public:
+      using RemoteWS::RemoteWS;
+      ~ClientWS();
+
+      const cb::SmartPointer<cb::KeyPair> &getPubKey() const {return pubKey;}
+      const std::string &getID() const {return id;}
+
+      void connect(const cb::JSON::ValuePtr &msg);
+      void disconnect(uint64_t ch);
+
+      // From cb::Event::JSONWebsocket
+      void onMessage(const cb::JSON::ValuePtr &msg);
+
+      // From cb::Event::Websocket
+      void onOpen();
+
+      // From cb::Event::Request
+      void onComplete();
+    };
+  }
 }

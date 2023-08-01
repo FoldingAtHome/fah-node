@@ -26,22 +26,17 @@
 
 \******************************************************************************/
 
-#include <fah/node/App.h>
+#include "RemoteWS.h"
+#include "App.h"
+#include "Server.h"
 
-#include <cbang/ApplicationMain.h>
-#include <cbang/event/Event.h>
-#include <cbang/event/Base.h>
-
-#include <event2/thread.h>
+using namespace std;
+using namespace cb;
+using namespace FAH::Node;
 
 
-int main(int argc, char *argv[]) {
-#ifdef DEBUG
-  cb::Event::Event::enableDebugMode();
-#endif
+RemoteWS::RemoteWS(App &app, const URI &uri, const Version &version) :
+  cb::Event::JSONWebsocket(uri, version), app(app) {}
 
-  evthread_use_pthreads();
-  cb::Event::Base::enableThreads();
 
-  return cb::doApplication<FAH::Node::App>(argc, argv);
-}
+void RemoteWS::onComplete() {app.getServer().remove(*this);}
