@@ -1,7 +1,4 @@
 <script>
-import api from './api'
-
-
 export default {
   data() {
     return {
@@ -10,11 +7,9 @@ export default {
   },
 
 
-  mounted() {
-    api.get('help').then((data) => {
-      this.help = data
-      this.$nextTick(() => location.hash = location.hash)
-    })
+  async mounted() {
+    this.help = await this.$api.request('help')
+    this.$nextTick(() => location.hash = location.hash)
   }
 }
 </script>

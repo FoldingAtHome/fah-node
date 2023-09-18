@@ -1,7 +1,4 @@
 <script>
-import api from './api'
-
-
 export default {
   data() {
     return {
@@ -30,15 +27,17 @@ export default {
     },
 
 
-    update() {
-      api.get('stats').then(data => {
+    async update() {
+      try {
+        let data = await this.$api.request('stats')
         this.stats = data
         this.load_stats(data.net)
 
-      }).finally(() => {
-        this.timer = setTimeout(this.update, 2000)
+      } catch (e) {
+      } finally {
+        this.timer   = setTimeout(this.update, 2000)
         this.loading = false
-      })
+      }
     }
   }
 }

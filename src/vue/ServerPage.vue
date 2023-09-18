@@ -1,7 +1,4 @@
 <script>
-import api from './api'
-
-
 export default {
   data() {
     return {
@@ -10,7 +7,9 @@ export default {
   },
 
 
-  mounted() {api.get('info').then(data => this.info = data)}
+  async mounted() {
+    this.info = await this.$api.request('info')
+  }
 }
 </script>
 

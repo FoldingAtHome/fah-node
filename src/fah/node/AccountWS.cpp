@@ -31,7 +31,7 @@
 #include "Account.h"
 #include "ClientWS.h"
 
-#include <cbang/Catch.h>
+#include <cbang/log/Logger.h>
 
 using namespace std;
 using namespace cb;
@@ -41,47 +41,49 @@ using namespace FAH::Node;
 AccountWS::~AccountWS() {}
 
 
-void AccountWS::notify(const ClientWS &client) {
+void AccountWS::connected(const ClientWS &client) {
   JSON::ValuePtr msg = new JSON::Dict;
-  msg->insert("type", "client");
-  msg->insert("pub", client.getPubKey()->publicToString());
+  msg->insert("type", "connect");
+  msg->insert("client", client.getLogin());
+  send(*msg);
+}
+
+
+void AccountWS::disconnected(const ClientWS &client) {
+  JSON::ValuePtr msg = new JSON::Dict;
+  msg->insert("type", "disconnect");
+  msg->insert("id",   client.getID());
   send(*msg);
 }
 
 
 void AccountWS::onMessage(const JSON::ValuePtr &msg) {
-  try {
-    string type = msg->getString("type", "");
+  string type = msg->getString("type", "");
 
-    if (type == "login") {
-      SmartPointer<Certificate> cert = new Certificate(msg->getString("cert"));
+  if (type == "login") {
+    onLogin(msg);
 
-      // TODO Check cert is valid
+    sid = msg->selectString("payload.session");
+    account = app.getAccount(getID());
+    account->add(this);
 
-      account    = app.getAccount(cert->getNameEntry("CN"));
-      this->cert = cert;
-      chain      = cert->getPublicKey()->publicToString();
-      // TODO Add API certificate to chain
-      account->add(this);
+    LOG_INFO(3, "Account " << getID() << " logged");
+    return;
+  }
 
-      return;
-    }
+  if (account.isNull()) THROW("Account not logged in");
 
-    if (account.isNull()) THROW("Account not logged in");
+  // Forward messages to client
+  if (type == "message") {
+    const string &cid = msg->getString("id");
+    LOG_DEBUG(3, "Account " << getID() << " sent message to " << cid);
+    return account->getClient(cid)->send(*msg);
+  }
 
-    // Forward messages to client
-    if (type == "connect" || type == "message") {
-      const auto &client = account->getClient(msg->getString("id"));
-      msg->insert("id", getConnID()); // Change ID
-      if (type == "connect") msg->insert("chain", chain);
-      client->send(*msg);
-      return;
-    }
+  // Broadcast account state to all clients and accounts
+  if (type == "broadcast") return account->broadcast(msg);
 
-    THROW("Invalid message type '" << type << "'");
-  } CATCH_ERROR;
-
-  close(Event::WebsockStatus::WS_STATUS_UNACCEPTABLE);
+  THROW("Invalid message type '" << type << "'");
 }
 
 

@@ -29,16 +29,32 @@
 #include "Account.h"
 #include "AccountWS.h"
 #include "ClientWS.h"
+#include "App.h"
+
+#include <cbang/Catch.h>
+#include <cbang/log/Logger.h>
+#include <cbang/json/Reader.h>
+
 
 using namespace std;
 using namespace cb;
 using namespace FAH::Node;
 
 
-const SmartPointer<AccountWS> &Account::getAccount(uint64_t id) const {
-  auto it = accounts.find(id);
-  if (it == accounts.end()) THROW("Account with ID '" << id << "' not found");
-  return it->second;
+Account::Account(App &app, const string &id) : app(app), id(id) {
+  // Load broadcasts
+  auto db = app.getDB(id + ":broadcast:");
+
+  for (auto it = db.first(); it.valid(); it++)
+    try {
+      broadcastMsgs[it.key()] = JSON::Reader::parseString(it.value());
+    } CATCH_ERROR;
+}
+
+
+SmartPointer<AccountWS> Account::getSession(const string &sid) const {
+  auto it = accounts.find(sid);
+  return it == accounts.end() ? 0 : it->second;
 }
 
 
@@ -50,11 +66,15 @@ const SmartPointer<ClientWS> &Account::getClient(const string &id) const {
 
 
 void Account::add(const SmartPointer<AccountWS> &account) {
-  accounts[account->getConnID()] = account;
+  accounts[account->getSessionID()] = account;
 
-  // Send "client" messages for each registered client
-  for (auto pair: clients)
-    account->notify(*pair.second);
+  // Send "client" messages for each logged in client
+  for (auto p: clients)
+    account->connected(*p.second);
+
+  // Send latest broadcasts
+  for (auto p: broadcastMsgs)
+    account->send(*p.second);
 }
 
 
@@ -64,18 +84,56 @@ void Account::add(const SmartPointer<ClientWS> &client) {
   clients[client->getID()] = client;
 
   // Notify connected accounts
-  for (auto pair: accounts)
-    pair.second->notify(*client);
+  for (auto p: accounts)
+    p.second->connected(*client);
+
+  // Send latest broadcasts
+  for (auto p: broadcastMsgs)
+    client->send(*p.second);
 }
 
 
 void Account::remove(const AccountWS &account) {
-  // TODO Send "disconnect" messages to each connected client
-  accounts.erase(account.getConnID());
+  string sid = account.getSessionID();
+  accounts.erase(sid);
+
+  // Send "session-close" message to any connected clients
+  for (auto p: clients)
+    p.second->closeSession(sid);
 }
 
 
 void Account::remove(const ClientWS &client) {
-  // TODO Send "disconnect" message to any connected accounts
   clients.erase(client.getID());
+
+  // Send "disconnect" message to any connected accounts
+  for (auto p: accounts)
+    p.second->disconnected(client);
+}
+
+
+void Account::broadcast(const JSON::ValuePtr &msg) {
+  string cmd = msg->selectString("payload.cmd");
+  LOG_DEBUG(3, "Account " << getID() << " broadcast " << cmd);
+
+  // Check timestamp
+  auto it = broadcastMsgs.find(cmd);
+  if (it != broadcastMsgs.end()) {
+    auto current = it->second;
+    uint64_t newTS = Time(    msg->selectString("payload.time"));
+    uint64_t oldTS = Time(current->selectString("payload.time"));
+    if (newTS <= oldTS) return;
+  }
+
+  // Save broadcast
+  auto db = app.getDB(getID() + ":broadcast:");
+  db.set(cmd, msg->toString(0, true));
+  broadcastMsgs[cmd] = msg;
+
+  // Broadcast
+  for (auto p: clients)
+    p.second->send(*msg);
+
+  for (auto p: accounts)
+    p.second->send(*msg);
 }

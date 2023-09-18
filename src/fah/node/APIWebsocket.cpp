@@ -26,32 +26,40 @@
 
 \******************************************************************************/
 
-#pragma once
+#include "APIWebsocket.h"
 
-#include <cbang/event/JSONWebsocket.h>
+#include "App.h"
+#include "Server.h"
+
+#include <cbang/json/Builder.h>
+
+using namespace std;
+using namespace cb;
+using namespace FAH::Node;
 
 
-namespace FAH {
-  namespace Node {
-    class App;
+APIWebsocket::APIWebsocket(App &app, const URI &uri, const Version &version) :
+  cb::Event::JSONWebsocket(uri, version), app(app) {}
 
-    class RemoteWS : public cb::Event::JSONWebsocket {
-    protected:
-      App &app;
-      std::string id;
-      cb::JSON::ValuePtr login;
 
-    public:
-      RemoteWS(App &app, const cb::URI &uri, const cb::Version &version);
+void APIWebsocket::onMessage(const JSON::ValuePtr &msg) {
+  JSON::Builder builder;
+  builder.beginDict();
+  builder.insert("id", *msg->get("id"));
+  builder.beginInsert("data");
 
-      const std::string &getID() const {return id;}
-      const cb::JSON::ValuePtr &getLogin() const {return login;}
+  auto &server = app.getServer();
+  string req   = msg->getString("request");
+  if (req == "server")      server.writeServer(builder);
+  if (req == "info")        server.writeInfo(builder);
+  if (req == "stats")       server.writeStats(builder);
+  if (req == "connections") server.writeConnections(builder);
+  if (req == "help")        server.writeHelp(builder);
 
-      // From cb::Event::Request
-      void onComplete();
+  builder.endDict();
 
-    protected:
-      void onLogin(const cb::JSON::ValuePtr &msg);
-    };
-  }
+  send(*builder.getRoot());
 }
+
+
+void APIWebsocket::onComplete() {app.getServer().remove(*this);}

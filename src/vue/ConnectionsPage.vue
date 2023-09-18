@@ -1,5 +1,4 @@
 <script>
-import api        from './api'
 import util       from './util'
 import Connection from './Connection.vue'
 
@@ -65,12 +64,15 @@ export default {
 
 
   methods: {
-    update() {
-      api.get('connections').then(data => {
-        this.connections = data
+    async update() {
+      try {
+        this.connections = await this.$api.request('connections')
         this.loading = false
 
-      }).finally(() => this.timer = setTimeout(this.update, 2000))
+      } catch (e) {
+      } finally {
+        this.timer = setTimeout(this.update, 2000)
+      }
     },
 
 

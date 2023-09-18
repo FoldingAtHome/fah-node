@@ -8,7 +8,6 @@
     "/images":                      {"groups": ["admin"]},
 
     "/api":                         {"groups": ["admin"]},
-    "/api/info":                    {"groups": ["unauthenticated"]},
     "/api/auth/logout":             {"groups": ["unauthenticated"]},
 
     "/ws":                          {"groups": ["unauthenticated"]}

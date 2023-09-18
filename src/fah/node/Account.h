@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include <cbang/SmartPointer.h>
+#include <cbang/json/Value.h>
 
 #include <cstdint>
 #include <map>
@@ -36,29 +36,35 @@
 
 namespace FAH {
   namespace Node {
+    class App;
     class AccountWS;
     class ClientWS;
 
     class Account {
+      App &app;
       std::string id;
 
       typedef cb::SmartPointer<AccountWS> AccountWSPtr;
       typedef cb::SmartPointer<ClientWS>  ClientWSPtr;
-      std::map<uint64_t,    AccountWSPtr> accounts;
+      std::map<std::string, AccountWSPtr> accounts;
       std::map<std::string, ClientWSPtr>  clients;
 
+      std::map<std::string, cb::JSON::ValuePtr> broadcastMsgs;
+
     public:
-      Account(const std::string &id) : id(id) {}
+      Account(App &app, const std::string &id);
 
       const std::string &getID() const {return id;}
       bool isEmpty() const {return accounts.empty() && clients.empty();}
 
-      const AccountWSPtr &getAccount(uint64_t id) const;
-      const ClientWSPtr  &getClient (const std::string &id) const;
+      AccountWSPtr getSession(const std::string &sid) const;
+      const ClientWSPtr &getClient(const std::string &id) const;
       void add(const AccountWSPtr &account);
       void add(const ClientWSPtr  &client);
       void remove(const AccountWS &account);
       void remove(const ClientWS  &client);
+
+      void broadcast(const cb::JSON::ValuePtr &msg);
     };
   }
 }

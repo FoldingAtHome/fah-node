@@ -31,6 +31,7 @@
 #include "Account.h"
 #include "ClientWS.h"
 #include "AccountWS.h"
+#include "APIWebsocket.h"
 
 #include <cbang/Exception.h>
 #include <cbang/Catch.h>
@@ -116,14 +117,13 @@ Server::Server(App &app) :
 Server::~Server() {}
 
 
-const SmartPointer<RemoteWS> &Server::add(
-  const SmartPointer<RemoteWS> &remote) {
-  return remotes[remote->getConnID()] = remote;
+const SmartPointer<Event::Request> &Server::add(const RequestPtr &ws) {
+  return websockets[ws->getID()] = ws;
 }
 
 
-void Server::remove(const RemoteWS &remote) {
-  remotes.erase(remote.getConnID());
+void Server::remove(const Event::Request &ws) {
+  websockets.erase(ws.getID());
 }
 
 
@@ -154,7 +154,11 @@ void Server::initHandlers() {
              sessionMan));
 
   // Redirect failed auth
-  auto cb = [] (Event::Request &req) {req.redirect("/login");};
+  auto cb = [] (Event::Request &req) {
+    if (String::startsWith(req.getURI().getPath(), "/api"))
+      req.reply(HTTP_UNAUTHORIZED);
+    else req.redirect("/login");
+  };
   addHandler(new Event::ACLHandler(aclSet, cb));
 
   ADD_HANDLER(HTTP_ANY, "^/((login)|(admin))$", forceSecure);
@@ -223,8 +227,100 @@ SmartPointer<Event::Request> Server::createRequest
   if (method == HTTP_GET && uri.getPath() == "/ws/account")
     return add(new AccountWS(app, uri, version));
 
+  if (method == HTTP_GET && uri.getPath() == "/api/ws")
+    return add(new APIWebsocket(app, uri, version));
+
   return Event::WebServer::createRequest(method, uri, version);
 }
+
+
+void Server::writeServer(JSON::Sink &sink) const {
+  sink.beginDict();
+  sink.insert("version", app.getVersion().toString());
+  sink.insert("uptime", app.getUptime());
+  sink.insert("time", Time().toString());
+  sink.endDict();
+}
+
+
+void Server::writeInfo(JSON::Sink &sink) const {
+  Info::instance().write(sink);
+}
+
+
+void Server::writeStats(JSON::Sink &sink) const {
+  sink.beginDict();
+
+  auto &base = app.getEventBase();
+  sink.insertDict("net");
+  sink.insert("receiving", base.getPool().getReadRate().get());
+  sink.insert("sending",   base.getPool().getWriteRate().get());
+  getStats()->insert(sink);
+  sink.endDict();
+
+  sink.insert("http-conns", getConnections().size());
+
+  // Events
+  sink.insertDict("events");
+  sink.insert("total",  base.getNumEvents());
+  sink.insert("active", base.getNumActiveEvents());
+
+  map<int, unsigned> counts;
+  base.countActiveEventsByPriority(counts);
+
+  for (auto it = counts.begin(); it != counts.end(); it++)
+    sink.insert(String::printf("priority-%u", it->first), it->second);
+
+  sink.endDict();
+
+  // Error & warning rates
+  sink.beginInsert("log");
+  Logger::instance().writeRates(sink);
+
+  sink.endDict();
+}
+
+
+void Server::writeConnections(JSON::Sink &sink) const {
+  sink.beginList();
+
+  uint64_t now = Time::now();
+
+  auto &conns = getConnections();
+  for (auto it = conns.begin(); it != conns.end(); it++) {
+    auto &conn = **it;
+    auto readProgress  = conn.getReadProgress();
+    auto writeProgress = conn.getWriteProgress();
+
+    readProgress.setEnd(now);
+    writeProgress.setEnd(now);
+
+    bool in = writeProgress.getSize() < readProgress.getSize();
+    auto progress = in ? readProgress : writeProgress;
+
+    sink.appendDict();
+    sink.insert("ip",           conn.getPeer().getHost());
+    sink.insert("id",           conn.getID());
+    sink.insert("status",       conn.getStatus());
+    sink.insertBoolean("https", conn.isSecure());
+    sink.insertBoolean("in",    in);
+    sink.insert("bytes_in",     readProgress.getTotal());
+    sink.insert("bytes_out",    writeProgress.getTotal());
+    sink.insert("rate",         progress.getRate());
+    sink.insert("rate_in",      readProgress.getRate());
+    sink.insert("rate_out",     writeProgress.getRate());
+    sink.insert("duration",     now - conn.getStart());
+    sink.insert("length",       progress.getSize());
+    sink.insert("eta",          progress.getETA());
+    sink.insert("progress",     progress.getProgress());
+    sink.endDict();
+  }
+
+  sink.endList();
+}
+
+
+void Server::writeHelp(JSON::Sink &sink) const {options.write(sink);}
 
 
 bool Server::apiCORS(Event::Request &req) {
@@ -267,98 +363,27 @@ bool Server::apiXFrameOptions(Event::Request &req) {
 
 
 void Server::apiServer(Event::Request &req, const JSON::ValuePtr &msg) {
-  auto writer = req.getJSONWriter();
-
-  writer->beginDict();
-  writer->insert("version", app.getVersion().toString());
-  writer->insert("uptime", app.getUptime());
-  writer->insert("time", Time().toString());
-  writer->endDict();
+  writeServer(*req.getJSONWriter());
 }
 
 
 void Server::apiInfo(Event::Request &req, const JSON::ValuePtr &msg) {
-  Info::instance().write(*req.getJSONWriter());
+  writeInfo(*req.getJSONWriter());
 }
 
 
 void Server::apiStats(Event::Request &req, const JSON::ValuePtr &msg) {
-  auto sink = req.getJSONWriter();
-  sink->beginDict();
-
-  auto &base = app.getEventBase();
-  sink->insertDict("net");
-  sink->insert("receiving", base.getPool().getReadRate().get());
-  sink->insert("sending",   base.getPool().getWriteRate().get());
-  getStats()->insert(*sink);
-  sink->endDict();
-
-  sink->insert("http-conns", getConnections().size());
-
-  // Events
-  sink->insertDict("events");
-  sink->insert("total",  base.getNumEvents());
-  sink->insert("active", base.getNumActiveEvents());
-
-  map<int, unsigned> counts;
-  base.countActiveEventsByPriority(counts);
-
-  for (auto it = counts.begin(); it != counts.end(); it++)
-    sink->insert(String::printf("priority-%u", it->first), it->second);
-
-  sink->endDict();
-
-  // Error & warning rates
-  sink->beginInsert("log");
-  Logger::instance().writeRates(*sink);
-
-  sink->endDict();
+  writeStats(*req.getJSONWriter());
 }
 
 
 void Server::apiConnections(Event::Request &req, const JSON::ValuePtr &msg) {
-  auto writer = req.getJSONWriter();
-
-  writer->beginList();
-
-  uint64_t now = Time::now();
-
-  auto &conns = getConnections();
-  for (auto it = conns.begin(); it != conns.end(); it++) {
-    auto &conn = **it;
-    auto readProgress = conn.getReadProgress();
-    auto writeProgress = conn.getWriteProgress();
-
-    readProgress.setEnd(now);
-    writeProgress.setEnd(now);
-
-    bool in = writeProgress.getSize() < readProgress.getSize();
-    auto progress = in ? readProgress : writeProgress;
-
-    writer->appendDict();
-    writer->insert("ip",           conn.getPeer().getHost());
-    writer->insert("id",           conn.getID());
-    writer->insert("status",       conn.getStatus());
-    writer->insertBoolean("https", conn.isSecure());
-    writer->insertBoolean("in",    in);
-    writer->insert("bytes_in",     readProgress.getTotal());
-    writer->insert("bytes_out",    writeProgress.getTotal());
-    writer->insert("rate",         progress.getRate());
-    writer->insert("rate_in",      readProgress.getRate());
-    writer->insert("rate_out",     writeProgress.getRate());
-    writer->insert("duration",     now - conn.getStart());
-    writer->insert("length",       progress.getSize());
-    writer->insert("eta",          progress.getETA());
-    writer->insert("progress",     progress.getProgress());
-    writer->endDict();
-  }
-
-  writer->endList();
+  writeConnections(*req.getJSONWriter());
 }
 
 
 void Server::apiHelp(Event::Request &req, const JSON::ValuePtr &msg) {
-  options.write(*req.getJSONWriter());
+  writeHelp(*req.getJSONWriter());
 }
 
 

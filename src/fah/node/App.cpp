@@ -102,8 +102,6 @@ App::App() :
 
   options["session-cookie"].setDefault("fah_node_sid");
 
-  Logger::instance().setLogRates(Logger::LEVEL_ERROR | Logger::LEVEL_WARNING);
-
   // Enable libevent logging
   Event::Event::enableLogging(3);
 
@@ -151,12 +149,15 @@ bool App::_hasFeature(int feature) {
 const SmartPointer<Account> &App::getAccount(const string &id) {
   // Clean up old accounts
   if (accountsClean == accounts.end()) accountsClean = accounts.begin();
-  if (accountsClean != accounts.end() && accountsClean->second->isEmpty())
-    accountsClean = accounts.erase(accountsClean);
+  if (accountsClean != accounts.end()) {
+    if (accountsClean->second->isEmpty())
+      accountsClean = accounts.erase(accountsClean);
+    else accountsClean++;
+  }
 
   // Get Account
   auto it = accounts.find(id);
-  if (it == accounts.end()) return accounts[id] = new Account(id);
+  if (it == accounts.end()) return accounts[id] = new Account(*this, id);
   return it->second;
 }
 
@@ -221,11 +222,11 @@ void App::initCerts() {
   // Load private key
   auto db = getDB();
 
-  if (db.has("private")) privateKey.readPrivate(db.get("private"));
+  if (db.has("private")) privateKey.readPrivatePEM(db.get("private"));
   else {
     privateKey.generateRSA(4096, 65537,
                            new KeyGenPacifier("Generating private key"));
-    db.set("private", privateKey.toString());
+    db.set("private", privateKey.privateToPEMString());
   }
   sslCtx.usePrivateKey(privateKey);
 
@@ -233,10 +234,10 @@ void App::initCerts() {
   KeyPair webKey;
   string webChain;
   {
-   if (db.has("web-key")) webKey.readPrivate(db.get("web-key"));
+   if (db.has("web-key")) webKey.readPrivatePEM(db.get("web-key"));
     else {
       webKey.generateRSA(4096, 65537, new KeyGenPacifier("Generating web key"));
-      db.set("web-key", webKey.toString());
+      db.set("web-key", webKey.privateToPEMString());
     }
     sslCtx.usePrivateKey(webKey);
 

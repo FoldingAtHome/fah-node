@@ -1,5 +1,4 @@
 <script>
-import api  from './api'
 import util from './util'
 
 
@@ -17,8 +16,10 @@ export default {
 
 
   methods: {
-    update() {
-      api.get('server').then(info => {
+    async update() {
+      try {
+        let info = await this.$api.request('server')
+
         this.info = info || {}
         this.state = 'Connected'
 
@@ -28,13 +29,18 @@ export default {
         info.date = moment(info.time).format('MMM Do, YYYY')
         info.time = moment(info.time).format('HH:mm:ss')
 
-      }).catch(() => {this.state = 'Disconnected'})
-        .finally(() => {this.timer = setTimeout(this.update, 5000)})
+      } catch (e) {
+        this.state = 'Disconnected'
+
+      } finally {
+        this.timer = setTimeout(this.update, 5000)
+      }
     },
 
 
-    logout() {
-      api.put('logout').then(() => {location.href = "/"})
+    async logout() {
+      await this.$api.put('logout')
+      location.href = '/'
     }
   }
 }

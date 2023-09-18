@@ -30,6 +30,9 @@
 #include "App.h"
 #include "Server.h"
 
+#include <cbang/openssl/Digest.h>
+#include <cbang/log/Logger.h>
+
 using namespace std;
 using namespace cb;
 using namespace FAH::Node;
@@ -40,3 +43,26 @@ RemoteWS::RemoteWS(App &app, const URI &uri, const Version &version) :
 
 
 void RemoteWS::onComplete() {app.getServer().remove(*this);}
+
+
+void RemoteWS::onLogin(const JSON::ValuePtr &msg) {
+  auto payload     = msg->get("payload");
+  string signature = msg->getString("signature");
+  string pubkey    = msg->getString("pubkey");
+
+  // Verify signature
+  KeyPair key;
+  key.readPublicSPKI(Base64().decode(pubkey));
+  key.verifyBase64SHA256(signature, payload->toString(0, true));
+
+  // Check timestamp is within allowed range
+  uint64_t now = Time::now();
+  uint64_t ts  = Time(payload->getString("time"));
+  const unsigned grace = 300;
+  if (ts < now - grace || now + grace < ts) THROW("Login timestamp invalid");
+
+  // Compute ID from public key
+  id = Digest::urlBase64(key.getRSA_N().toBinString(), "sha256");
+
+  login = msg;
+}

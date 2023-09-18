@@ -31,7 +31,6 @@
 #include "RemoteWS.h"
 
 #include <cbang/SmartPointer.h>
-#include <cbang/openssl/Certificate.h>
 
 
 namespace FAH {
@@ -41,14 +40,16 @@ namespace FAH {
 
     class AccountWS : public RemoteWS {
       cb::SmartPointer<Account> account;
-      cb::SmartPointer<cb::Certificate> cert;
-      std::string chain; // Certificate chain
+      std::string sid;
 
     public:
       using RemoteWS::RemoteWS;
       ~AccountWS();
 
-      void notify(const ClientWS &client);
+      const std::string &getSessionID() const {return sid;}
+
+      void connected(const ClientWS &client);
+      void disconnected(const ClientWS &client);
 
       // From cb::Event::JSONWebsocket
       void onMessage(const cb::JSON::ValuePtr &msg);

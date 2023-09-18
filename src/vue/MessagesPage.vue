@@ -1,7 +1,4 @@
 <script>
-import api from './api'
-
-
 export default {
   data() {
     return {
@@ -47,14 +44,15 @@ export default {
 
 
   methods: {
-    update() {
-      api.get('stats').then(data => {
-        this.stats = data
+    async update() {
+      try {
+        this.stats = await this.$api.request('stats')
 
-      }).finally(() => {
-        this.timer = setTimeout(this.update, 2000)
+      } catch (e) {
+      } finally {
+        this.timer   = setTimeout(this.update, 2000)
         this.loading = false
-      })
+      }
     }
   }
 }

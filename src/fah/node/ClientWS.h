@@ -37,18 +37,12 @@ namespace FAH {
 
     class ClientWS : public RemoteWS {
       cb::SmartPointer<Account> account;
-      cb::SmartPointer<cb::KeyPair> pubKey;
-      std::string id;
 
     public:
       using RemoteWS::RemoteWS;
       ~ClientWS();
 
-      const cb::SmartPointer<cb::KeyPair> &getPubKey() const {return pubKey;}
-      const std::string &getID() const {return id;}
-
-      void connect(const cb::JSON::ValuePtr &msg);
-      void disconnect(uint64_t ch);
+      void closeSession(const std::string &sid);
 
       // From cb::Event::JSONWebsocket
       void onMessage(const cb::JSON::ValuePtr &msg);

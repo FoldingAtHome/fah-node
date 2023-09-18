@@ -53,15 +53,15 @@ namespace FAH {
       cb::GoogleOAuth2 googleOAuth2;
       cb::ACLSet aclSet;
 
-      typedef cb::SmartPointer<RemoteWS> RemoteWSPtr;
-      std::map<uint64_t, RemoteWSPtr> remotes;
+      typedef cb::SmartPointer<cb::Event::Request> RequestPtr;
+      std::map<uint64_t, RequestPtr> websockets;
 
     public:
       Server(App &app);
       ~Server();
 
-      const RemoteWSPtr &add(const RemoteWSPtr &remote);
-      void remove(const RemoteWS &remote);
+      const RequestPtr &add(const RequestPtr &ws);
+      void remove(const cb::Event::Request &ws);
 
       void init(cb::SSLContext &ctx);
       void initHandlers();
@@ -73,6 +73,12 @@ namespace FAH {
       cb::SmartPointer<cb::Event::Request> createRequest
       (cb::Event::RequestMethod method, const cb::URI &uri,
        const cb::Version &version);
+
+      void writeServer     (cb::JSON::Sink &sink) const;
+      void writeInfo       (cb::JSON::Sink &sink) const;
+      void writeStats      (cb::JSON::Sink &sink) const;
+      void writeConnections(cb::JSON::Sink &sink) const;
+      void writeHelp       (cb::JSON::Sink &sink) const;
 
     protected:
       typedef cb::Event::Request EReq;
@@ -89,6 +95,7 @@ namespace FAH {
       void apiHelp         (EReq &req, const JVP &msg);
 
       // Webpage handler methods
+
       bool forceSecure     (EReq &req);
       bool loginPage       (EReq &req);
     };

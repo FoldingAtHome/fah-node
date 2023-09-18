@@ -30,28 +30,21 @@
 
 #include <cbang/event/JSONWebsocket.h>
 
-
 namespace FAH {
   namespace Node {
     class App;
 
-    class RemoteWS : public cb::Event::JSONWebsocket {
-    protected:
+    class APIWebsocket : public cb::Event::JSONWebsocket {
       App &app;
-      std::string id;
-      cb::JSON::ValuePtr login;
 
     public:
-      RemoteWS(App &app, const cb::URI &uri, const cb::Version &version);
+      APIWebsocket(App &app, const cb::URI &uri, const cb::Version &version);
 
-      const std::string &getID() const {return id;}
-      const cb::JSON::ValuePtr &getLogin() const {return login;}
+      // From cb::Event::JSONWebsocket
+      void onMessage(const cb::JSON::ValuePtr &msg);
 
       // From cb::Event::Request
       void onComplete();
-
-    protected:
-      void onLogin(const cb::JSON::ValuePtr &msg);
     };
   }
 }

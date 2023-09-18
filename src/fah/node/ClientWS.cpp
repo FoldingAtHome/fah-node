@@ -29,9 +29,9 @@
 #include "ClientWS.h"
 #include "App.h"
 #include "Account.h"
+#include "AccountWS.h"
 
 #include <cbang/Catch.h>
-#include <cbang/openssl/Digest.h>
 
 using namespace std;
 using namespace cb;
@@ -41,48 +41,52 @@ using namespace FAH::Node;
 ClientWS::~ClientWS() {}
 
 
-void ClientWS::connect(const JSON::ValuePtr &msg) {
-  send(*msg);
-}
-
-
-void ClientWS::disconnect(uint64_t ch) {
-  JSON::ValuePtr msg = new JSON::Dict;
-  msg->insert("type", "disconnect");
-  msg->insert("ch",   ch);
-  send(*msg);
+void ClientWS::closeSession(const string &sid) {
+  JSON::Dict msg;
+  msg.insert("type", "session-close");
+  msg.insert("session", sid);
+  send(msg);
 }
 
 
 void ClientWS::onMessage(const JSON::ValuePtr &msg) {
-  try {
-    string type = msg->getString("type", "");
+  string type = msg->getString("type");
 
-    if (type == "register") {
-      account = app.getAccount(msg->getString("account"));
-      pubKey  = new KeyPair(msg->getString("pub"));
-      id      = Digest::base64(pubKey->getPublic().toBinString(), "sha256");
-      account->add(this);
+  if (type == "login") {
+    onLogin(msg);
 
-      return;
-    }
+    // Add to account
+    string aid = msg->selectString("payload.account");
+    account = app.getAccount(aid);
+    account->add(this);
 
-    if (account.isNull()) THROW("Client not registered");
+    LOG_INFO(3, "Client " << getID() << " logged in to " << aid);
+    return;
+  }
 
-    if (type == "message") {
-      // TODO Forward "message" to account channel
-      return;
-    }
+  if (account.isNull()) THROW("Client not logged in");
 
-    THROW("Invalid message type '" << type << "'");
-  } CATCH_ERROR;
+  if (type == "message") {
+    // Forward "message" to account session
+    string sid = msg->getString("session");
+    auto session = account->getSession(sid);
 
-  close(Event::WebsockStatus::WS_STATUS_UNACCEPTABLE);
+    if (session.isSet()) {
+      session->send(*msg);
+      LOG_DEBUG(3, "Client " << getID() << " sent message to account "
+                << account->getID() << " session " << sid);
+
+    } else closeSession(sid);
+
+  } else if (type == "status") {
+    // TODO handle client status messages
+
+  } else THROW("Invalid message type '" << type << "'");
 }
 
 
 void ClientWS::onOpen() {
-  // TODO Timeout if client does not "register"
+  // TODO Timeout if client does not "login"
 }
 
 
