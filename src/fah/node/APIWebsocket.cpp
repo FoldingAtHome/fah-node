@@ -32,6 +32,7 @@
 #include "Server.h"
 
 #include <cbang/json/Builder.h>
+#include <cbang/event/HTTPConn.h>
 
 using namespace std;
 using namespace cb;
@@ -59,6 +60,12 @@ void APIWebsocket::onMessage(const JSON::ValuePtr &msg) {
   builder.endDict();
 
   send(*builder.getRoot());
+}
+
+
+void APIWebsocket::onOpen() {
+  // Clear Connection TTL
+  getConnection()->setTTL(0);
 }
 
 

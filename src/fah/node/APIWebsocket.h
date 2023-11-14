@@ -43,6 +43,9 @@ namespace FAH {
       // From cb::Event::JSONWebsocket
       void onMessage(const cb::JSON::ValuePtr &msg);
 
+      // From cb::Event::Websocket
+      void onOpen();
+
       // From cb::Event::Request
       void onComplete();
     };

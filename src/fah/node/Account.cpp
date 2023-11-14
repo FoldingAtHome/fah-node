@@ -120,8 +120,8 @@ void Account::broadcast(const JSON::ValuePtr &msg) {
   auto it = broadcastMsgs.find(cmd);
   if (it != broadcastMsgs.end()) {
     auto current = it->second;
-    uint64_t newTS = Time(    msg->selectString("payload.time"));
-    uint64_t oldTS = Time(current->selectString("payload.time"));
+    uint64_t newTS = Time::parse(msg->selectString("payload.time"));
+    uint64_t oldTS = Time::parse(current->selectString("payload.time"));
     if (newTS <= oldTS) return;
   }
 

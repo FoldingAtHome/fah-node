@@ -32,6 +32,7 @@
 
 #include <cbang/openssl/Digest.h>
 #include <cbang/log/Logger.h>
+#include <cbang/event/HTTPConn.h>
 
 using namespace std;
 using namespace cb;
@@ -57,7 +58,7 @@ void RemoteWS::onLogin(const JSON::ValuePtr &msg) {
 
   // Check timestamp is within allowed range
   uint64_t now = Time::now();
-  uint64_t ts  = Time(payload->getString("time"));
+  uint64_t ts  = Time::parse(payload->getString("time"));
   const unsigned grace = 300;
   if (ts < now - grace || now + grace < ts) THROW("Login timestamp invalid");
 
@@ -65,4 +66,7 @@ void RemoteWS::onLogin(const JSON::ValuePtr &msg) {
   id = Digest::urlBase64(key.getRSA_N().toBinString(), "sha256");
 
   login = msg;
+
+  // Clear Connection TTL
+  getConnection()->setTTL(0);
 }

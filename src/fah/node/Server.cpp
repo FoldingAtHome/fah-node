@@ -93,7 +93,7 @@ Server::Server(App &app) :
   options["http-max-headers-size"].setDefault(16 * 1024);
   options["http-timeout"         ].setDefault(90);
   options["http-max-connections" ].setDefault(4096);
-  options["http-max-ttl"         ].setDefault(Time::SEC_PER_HOUR);
+  options["http-max-ttl"         ].setDefault(Time::SEC_PER_MIN);
 
   options.add("bind-ip", "The address to bind outgoing connections to.");
   options.add("ssl-cipher-list", "Allowed OpenSSL ciphers")

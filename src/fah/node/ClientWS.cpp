@@ -85,11 +85,6 @@ void ClientWS::onMessage(const JSON::ValuePtr &msg) {
 }
 
 
-void ClientWS::onOpen() {
-  // TODO Timeout if client does not "login"
-}
-
-
 void ClientWS::onComplete() {
   if (account.isSet()) account->remove(*this);
   RemoteWS::onComplete();
