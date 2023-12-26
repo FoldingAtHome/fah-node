@@ -87,9 +87,13 @@ void Account::add(const SmartPointer<ClientWS> &client) {
   for (auto p: accounts)
     p.second->connected(*client);
 
-  // Send latest broadcasts
-  for (auto p: broadcastMsgs)
-    client->send(*p.second);
+  // Send recent broadcasts
+  auto now = Time::now();
+  for (auto p: broadcastMsgs) {
+    auto msg    = p.second;
+    uint64_t ts = Time::parse(msg->selectString("payload.time"));
+    if (now < ts + 5 * Time::SEC_PER_MIN) client->send(*msg);
+  }
 }
 
 
