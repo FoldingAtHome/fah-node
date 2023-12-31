@@ -98,8 +98,6 @@ Server::Server(App &app) :
   options.add("bind-ip", "The address to bind outgoing connections to.");
   options.add("ssl-cipher-list", "Allowed OpenSSL ciphers")
     ->setDefault("HIGH:!aNULL:!PSK:!SRP:!MD5:!RC4");
-  options.add("ssl-ca-certificates", "Path to trusted SSL CA certificates file")
-    ->setDefault("/etc/ssl/certs/ca-certificates.crt");
   options.add("admins", "Grant admin access to these email addresses")
     ->setType(Option::STRINGS_TYPE);
   options.popCategory();
@@ -133,11 +131,7 @@ void Server::init(SSLContext &ctx) {
       !options["ssl-cipher-list"].toString().empty())
     ctx.setCipherList(options["ssl-cipher-list"]);
 
-  string caCertsFile = options["ssl-ca-certificates"];
-  if (!caCertsFile.empty()) ctx.loadVerifyLocationsFile(caCertsFile);
-
-  // Request but not require client certificate and set verification depth
-  ctx.setVerifyPeer(true, false, 4);
+  ctx.loadSystemRootCerts();
 }
 
 
