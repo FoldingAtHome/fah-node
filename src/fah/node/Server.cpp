@@ -132,9 +132,6 @@ void Server::init(SSLContext &ctx) {
     ctx.setCipherList(options["ssl-cipher-list"]);
 
   ctx.loadSystemRootCerts();
-
-  // Dont request client certificate and set verification depth
-  ctx.setVerifyPeer(false, false, 4);
 }
 
 
