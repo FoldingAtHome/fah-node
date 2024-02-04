@@ -1,22 +1,25 @@
-#!/bin/bash
+#!/bin/sh -e
 
 NAME=fah-node
-
+_HOME=/var/lib/$NAME
 
 case "$1" in
-  install|upgrade)
-    if [ "$1" == "upgrade" ]; then
-      ACTIVE=$(systemctl is-active $NAME || true)
+  install)
+    # Create group if it does not exist
+    if ! getent group $NAME >/dev/null; then
+      groupadd --system $NAME || true
+    fi
+    # Create user if it does not exist
+    if ! getent passwd $NAME >/dev/null; then
+      useradd --system --gid $NAME --shell /usr/sbin/nologin \
+        --home-dir $_HOME --no-create-home $NAME || true
+    fi
+    ;;
 
-      if [ "$ACTIVE" = "active" ]; then
-        # Stop the service
-        service $NAME stop
-
-        touch /tmp/$NAME.active
-
-      else
-        rm -f /tmp/$NAME.active
-      fi
+  upgrade)
+    # Remove broken symlink installed by previous packages
+    if dpkg --compare-versions "$2" lt 0.0.3; then
+      systemctl -q disable $NAME || true
     fi
     ;;
 esac

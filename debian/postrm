@@ -1,14 +1,21 @@
-#!/bin/bash -e
+#!/bin/sh -e
 
 NAME=fah-node
 _ETC=/etc/$NAME
-_RUN=/var/lib/$NAME
+_HOME=/var/lib/$NAME
 _LOG=/var/log/$NAME
 
-
 case "$1" in
+  remove)
+    systemctl daemon-reload || true
+    ;;
+
   purge)
-    # Remove files
-    rm -rf $_ETC $_RUN $_LOG
+    # Remove all files
+    rm -rf $_ETC $_HOME $_LOG
+
+    # Remove user and group
+    deluser  --quiet $NAME || true
+    delgroup --quiet $NAME || true
     ;;
 esac

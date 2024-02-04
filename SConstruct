@@ -79,14 +79,13 @@ if 'package' in COMMAND_LINE_TARGETS:
     bug_url         = package_info['bugs']['url'],
     summary         = 'Folding@home Node',
     description     = description,
-    prefix          = '/usr',
 
     documents       = docs,
     programs        = [str(prog[0])],
     scripts         = ['scripts/fah-node-ports'],
     changelog       = 'changelog',
-    platform_independent = [
-      'share/sample-config.xml', 'share/fah-node.service'],
+    platform_independent = ['data/sample-config.xml'],
+    systemd         = ['data/fah-node.service'],
 
     deb_directory   = 'debian',
     deb_section     = 'science',
