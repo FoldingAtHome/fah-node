@@ -71,28 +71,27 @@ AlwaysBuild(tar)
 if 'package' in COMMAND_LINE_TARGETS:
   pkg = env.Packager(
     name,
-    version = version,
-    maintainer = package_info['author'],
-    vendor = package_info['org'],
-    url = package_info['homepage'],
-    license = 'LICENSE',
-    bug_url = package_info['bugs']['url'],
-    summary = 'Folding@home Node',
-    description = description,
-    prefix = '/usr',
+    version         = version,
+    maintainer      = package_info['author'],
+    vendor          = package_info['org'],
+    url             = package_info['homepage'],
+    license         = 'LICENSE',
+    bug_url         = package_info['bugs']['url'],
+    summary         = 'Folding@home Node',
+    description     = description,
+    prefix          = '/usr',
 
-    documents = docs,
-    programs = [str(prog[0])],
-    scripts = ['scripts/fah-node-ports'],
-    changelog = 'changelog',
-    platform_independent = ['share/sample-config.xml',
-                'share/fah-node.service'],
+    documents       = docs,
+    programs        = [str(prog[0])],
+    scripts         = ['scripts/fah-node-ports'],
+    changelog       = 'changelog',
+    platform_independent = [
+      'share/sample-config.xml', 'share/fah-node.service'],
 
-    deb_directory = 'debian',
-    deb_section = 'science',
-    deb_depends = 'debconf | debconf-2.0, libc6, bzip2, zlib1g, systemd',
+    deb_directory   = 'debian',
+    deb_section     = 'science',
     deb_pre_depends = 'adduser, ssl-cert, curl',
-    deb_priority = 'optional',
+    deb_priority    = 'optional',
   )
 
   AlwaysBuild(pkg)
