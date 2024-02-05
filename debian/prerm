@@ -1,15 +1,10 @@
-#!/bin/bash -e
+#!/bin/sh -e
 
 NAME=fah-node
 
-
 case "$1" in
   remove)
-    service $NAME stop
-
-    if [ -e /etc/systemd/system/$NAME.service ]; then
-      rm -f /etc/systemd/system/$NAME.service
-      systemctl daemon-reload
-    fi
+    systemctl stop $NAME || true
+    systemctl -q disable $NAME || true
     ;;
 esac
