@@ -39,7 +39,6 @@ namespace FAH {
     class ClientWS;
 
     class AccountWS : public RemoteWS {
-      cb::SmartPointer<Account> account;
       std::string sid;
 
     public:
@@ -49,7 +48,7 @@ namespace FAH {
       const std::string &getSessionID() const {return sid;}
 
       void connected(const ClientWS &client);
-      void disconnected(const ClientWS &client);
+      void disconnected(const std::string &id);
 
       // From cb::Event::JSONWebsocket
       void onMessage(const cb::JSON::ValuePtr &msg);

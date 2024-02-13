@@ -29,6 +29,7 @@
 #include "RemoteWS.h"
 #include "App.h"
 #include "Server.h"
+#include "Account.h"
 
 #include <cbang/openssl/Digest.h>
 #include <cbang/log/Logger.h>
@@ -41,6 +42,10 @@ using namespace FAH::Node;
 
 RemoteWS::RemoteWS(App &app, const URI &uri, const Version &version) :
   cb::Event::JSONWebsocket(uri, version), app(app) {}
+
+
+RemoteWS::~RemoteWS() {}
+
 
 
 void RemoteWS::onComplete() {app.getServer().remove(*this);}

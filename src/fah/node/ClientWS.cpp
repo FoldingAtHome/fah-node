@@ -57,8 +57,7 @@ void ClientWS::onMessage(const JSON::ValuePtr &msg) {
 
     // Add to account
     string aid = msg->selectString("payload.account");
-    account = app.getAccount(aid);
-    account->add(this);
+    app.getAccount(aid)->add(this);
 
     LOG_INFO(3, "Client " << getID() << " logged in to " << aid);
     return;
@@ -86,6 +85,6 @@ void ClientWS::onMessage(const JSON::ValuePtr &msg) {
 
 
 void ClientWS::onComplete() {
-  if (account.isSet()) account->remove(*this);
+  if (account.isSet()) account->removeClient(getID());
   RemoteWS::onComplete();
 }

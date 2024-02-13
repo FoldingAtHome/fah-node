@@ -36,8 +36,6 @@ namespace FAH {
     class Account;
 
     class ClientWS : public RemoteWS {
-      cb::SmartPointer<Account> account;
-
     public:
       using RemoteWS::RemoteWS;
       ~ClientWS();

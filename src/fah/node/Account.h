@@ -40,7 +40,7 @@ namespace FAH {
     class AccountWS;
     class ClientWS;
 
-    class Account {
+    class Account : virtual public cb::RefCounted {
       App &app;
       std::string id;
 
@@ -61,8 +61,8 @@ namespace FAH {
       const ClientWSPtr &getClient(const std::string &id) const;
       void add(const AccountWSPtr &account);
       void add(const ClientWSPtr  &client);
-      void remove(const AccountWS &account);
-      void remove(const ClientWS  &client);
+      void removeAccount(const std::string &id);
+      void removeClient(const std::string &id);
 
       void broadcast(const cb::JSON::ValuePtr &msg);
     };

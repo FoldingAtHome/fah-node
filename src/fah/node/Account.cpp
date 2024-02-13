@@ -66,7 +66,10 @@ const SmartPointer<ClientWS> &Account::getClient(const string &id) const {
 
 
 void Account::add(const SmartPointer<AccountWS> &account) {
-  accounts[account->getSessionID()] = account;
+  auto &sid = account->getSessionID();
+  removeAccount(sid);
+  accounts[sid] = account;
+  account->setAccount(this);
 
   // Send "client" messages for each logged in client
   for (auto p: clients)
@@ -80,8 +83,12 @@ void Account::add(const SmartPointer<AccountWS> &account) {
 
 void Account::add(const SmartPointer<ClientWS> &client) {
   // TODO check that client is linked to this account
+  // Otherwise, any client can claim to be linked to any account
 
-  clients[client->getID()] = client;
+  auto &id = client->getID();
+  removeClient(id);
+  clients[id] = client;
+  client->setAccount(this);
 
   // Notify connected accounts
   for (auto p: accounts)
@@ -97,9 +104,11 @@ void Account::add(const SmartPointer<ClientWS> &client) {
 }
 
 
-void Account::remove(const AccountWS &account) {
-  string sid = account.getSessionID();
-  accounts.erase(sid);
+void Account::removeAccount(const string &sid) {
+  auto it = accounts.find(sid);
+  if (it == accounts.end()) return;
+  it->second->setAccount(0);
+  accounts.erase(it);
 
   // Send "session-close" message to any connected clients
   for (auto p: clients)
@@ -107,12 +116,15 @@ void Account::remove(const AccountWS &account) {
 }
 
 
-void Account::remove(const ClientWS &client) {
-  clients.erase(client.getID());
+void Account::removeClient(const string &id) {
+  auto it = clients.find(id);
+  if (it == clients.end()) return;
+  it->second->setAccount(0);
+  clients.erase(it);
 
   // Send "disconnect" message to any connected accounts
   for (auto p: accounts)
-    p.second->disconnected(client);
+    p.second->disconnected(id);
 }
 
 

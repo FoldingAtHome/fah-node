@@ -34,18 +34,24 @@
 namespace FAH {
   namespace Node {
     class App;
+    class Account;
 
     class RemoteWS : public cb::Event::JSONWebsocket {
     protected:
       App &app;
       std::string id;
       cb::JSON::ValuePtr login;
+      cb::SmartPointer<Account> account;
 
     public:
       RemoteWS(App &app, const cb::URI &uri, const cb::Version &version);
+      ~RemoteWS();
 
       const std::string &getID() const {return id;}
       const cb::JSON::ValuePtr &getLogin() const {return login;}
+
+      void setAccount(const cb::SmartPointer<Account> account)
+        {this->account = account;}
 
       // From cb::Event::Request
       void onComplete();

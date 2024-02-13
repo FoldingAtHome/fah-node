@@ -49,10 +49,10 @@ void AccountWS::connected(const ClientWS &client) {
 }
 
 
-void AccountWS::disconnected(const ClientWS &client) {
+void AccountWS::disconnected(const string &id) {
   JSON::ValuePtr msg = new JSON::Dict;
   msg->insert("type", "disconnect");
-  msg->insert("id",   client.getID());
+  msg->insert("id",   id);
   send(*msg);
 }
 
@@ -64,8 +64,7 @@ void AccountWS::onMessage(const JSON::ValuePtr &msg) {
     onLogin(msg);
 
     sid = msg->selectString("payload.session");
-    account = app.getAccount(getID());
-    account->add(this);
+    app.getAccount(getID())->add(this);
 
     LOG_INFO(3, "Account " << getID() << " logged");
     return;
@@ -93,6 +92,6 @@ void AccountWS::onOpen() {
 
 
 void AccountWS::onComplete() {
-  if (account.isSet()) account->remove(*this);
+  if (account.isSet()) account->removeAccount(sid);
   RemoteWS::onComplete();
 }
