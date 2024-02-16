@@ -11,6 +11,9 @@ case "$1" in
     ;;
 
   purge)
+    # Disable service
+    deb-systemd-helper purge $NAME.service || true
+
     # Remove all files
     rm -rf $_ETC $_HOME $_LOG
 
