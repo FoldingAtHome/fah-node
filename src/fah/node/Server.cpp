@@ -387,7 +387,7 @@ bool Server::forceSecure(Event::Request &req) {
   // Redirect to first secure port
   for (auto it = getPorts().begin(); it != getPorts().end(); it++)
     if ((*it)->isSecure()) {
-      const IPAddress &addr = (*it)->getAddr();
+      auto &addr = (*it)->getAddr();
 
       URI redirectURI = req.getURI();
       redirectURI.setScheme("https");

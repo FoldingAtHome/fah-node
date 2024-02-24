@@ -170,10 +170,8 @@ int App::init(int argc, char *argv[]) {
   if (ret == -1) return ret;
 
   // Set up outgoing client
-  if (options["bind-ip"].isSet()) {
-    IPAddress bindIP(options["bind-ip"]);
-    client.setBindAddress(bindIP);
-  }
+  if (options["bind-ip"].isSet())
+    client.setBindAddress(options["bind-ip"].toString());
   client.setStats(SmartPointer<RateSet>::Phony(&stats));
 
   server->init();

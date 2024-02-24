@@ -65,7 +65,8 @@ void RemoteWS::onLogin(const JSON::ValuePtr &msg) {
   uint64_t now = Time::now();
   uint64_t ts  = Time::parse(payload->getString("time"));
   const unsigned grace = 300;
-  if (ts < now - grace || now + grace < ts) THROW("Login timestamp invalid");
+  if (ts < now - grace || now + grace < ts)
+    THROW("Login timestamp invalid: " << payload->getString("time"));
 
   // Compute ID from public key
   id = Digest::urlBase64(key.getRSA_N().toBinString(), "sha256");

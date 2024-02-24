@@ -34,7 +34,6 @@
 #include <cbang/json/Sink.h>
 #include <cbang/acmev2/Account.h>
 
-#include <cbang/net/IPAddress.h>
 #include <cbang/net/SessionManager.h>
 
 #include <cbang/openssl/Certificate.h>
