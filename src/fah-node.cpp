@@ -32,15 +32,12 @@
 #include <cbang/event/Event.h>
 #include <cbang/event/Base.h>
 
-#include <event2/thread.h>
-
 
 int main(int argc, char *argv[]) {
 #ifdef DEBUG
   cb::Event::Event::enableDebugMode();
 #endif
 
-  evthread_use_pthreads();
   cb::Event::Base::enableThreads();
 
   return cb::doApplication<FAH::Node::App>(argc, argv);
