@@ -293,7 +293,7 @@ void Server::writeConnections(JSON::Sink &sink) const {
     auto progress = in ? readProgress : writeProgress;
 
     sink.appendDict();
-    sink.insert("ip",           conn.getPeer().getHost());
+    sink.insert("ip",           conn.getPeerAddr().toString(false));
     sink.insert("id",           conn.getID());
     sink.insert("status",       conn.getStatus());
     sink.insertBoolean("https", conn.isSecure());
@@ -391,7 +391,7 @@ bool Server::forceSecure(Event::Request &req) {
 
       URI redirectURI = req.getURI();
       redirectURI.setScheme("https");
-      redirectURI.setHost(addr.getHost());
+      redirectURI.setHost(addr.toString(false));
       redirectURI.setPort(addr.getPort());
       req.redirect(redirectURI);
       return true;
