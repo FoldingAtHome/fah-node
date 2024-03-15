@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include <cbang/event/WebServer.h>
+#include <cbang/http/WebServer.h>
 #include <cbang/util/ACLSet.h>
 #include <cbang/json/JSON.h>
 #include <cbang/auth/GoogleOAuth2.h>
@@ -45,15 +45,15 @@ namespace FAH {
     class App;
     class RemoteWS;
 
-    class Server : public cb::Event::WebServer,
-                   public cb::Event::HTTPHandlerFactory {
+    class Server : public cb::HTTP::WebServer,
+                   public cb::HTTP::HandlerFactory {
     protected:
       App &app;
       cb::Options &options;
       cb::GoogleOAuth2 googleOAuth2;
       cb::ACLSet aclSet;
 
-      typedef cb::SmartPointer<cb::Event::Request> RequestPtr;
+      typedef cb::SmartPointer<cb::HTTP::Request> RequestPtr;
       std::map<uint64_t, RequestPtr> websockets;
 
     public:
@@ -61,17 +61,18 @@ namespace FAH {
       ~Server();
 
       const RequestPtr &add(const RequestPtr &ws);
-      void remove(const cb::Event::Request &ws);
+      void remove(const cb::HTTP::Request &ws);
 
       void init(cb::SSLContext &ctx);
       void initHandlers();
 
-      // From cb::Event::WebServer
+      // From cb::HTTP::WebServer
       void init();
 
       // From cb::Event::HTTPHandler
-      cb::SmartPointer<cb::Event::Request> createRequest
-      (cb::Event::RequestMethod method, const cb::URI &uri,
+      cb::SmartPointer<cb::HTTP::Request> createRequest
+      (const cb::SmartPointer<cb::HTTP::Conn> &connection,
+       cb::HTTP::Method method, const cb::URI &uri,
        const cb::Version &version);
 
       void writeServer     (cb::JSON::Sink &sink) const;
@@ -81,7 +82,7 @@ namespace FAH {
       void writeHelp       (cb::JSON::Sink &sink) const;
 
     protected:
-      typedef cb::Event::Request EReq;
+      typedef cb::HTTP::Request EReq;
       typedef cb::JSON::ValuePtr JVP;
 
       bool apiCORS         (EReq &req);

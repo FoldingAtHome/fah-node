@@ -41,14 +41,14 @@
 #include <cbang/util/Resource.h>
 #include <cbang/util/RateSet.h>
 
-#include <cbang/event/Headers.h>
+#include <cbang/http/Headers.h>
 #include <cbang/event/FDPool.h>
-#include <cbang/event/HTTPConn.h>
-#include <cbang/event/FileHandler.h>
-#include <cbang/event/ACLHandler.h>
-#include <cbang/event/ResourceHTTPHandler.h>
-#include <cbang/event/HTTPSessionHandler.h>
-#include <cbang/event/HTTPOAuth2LoginHandler.h>
+#include <cbang/http/Conn.h>
+#include <cbang/http/FileHandler.h>
+#include <cbang/http/ACLHandler.h>
+#include <cbang/http/ResourceHandler.h>
+#include <cbang/http/SessionHandler.h>
+#include <cbang/http/OAuth2LoginHandler.h>
 
 #include <cbang/openssl/SSLContext.h>
 #include <cbang/log/Logger.h>
@@ -68,13 +68,13 @@ namespace FAH {
 
 
 Server::Server(App &app) :
-  Event::WebServer(app.getOptions(), app.getEventBase(), new SSLContext,
-                   SmartPointer<HTTPHandlerFactory>::Phony(this)),
+  HTTP::WebServer(app.getOptions(), app.getEventBase(), new SSLContext,
+                   SmartPointer<HTTP::HandlerFactory>::Phony(this)),
   app(app), options(app.getOptions()), googleOAuth2(app.getOptions()) {
 
   setLogPrefix(true);
 
-  // Event::Server
+  // HTTP::Server
   options["http-addresses" ].setDefault("0.0.0.0:8080");
   options["https-addresses"].setDefault("0.0.0.0:8084");
 
@@ -115,12 +115,12 @@ Server::Server(App &app) :
 Server::~Server() {}
 
 
-const SmartPointer<Event::Request> &Server::add(const RequestPtr &ws) {
+const SmartPointer<HTTP::Request> &Server::add(const RequestPtr &ws) {
   return websockets[ws->getID()] = ws;
 }
 
 
-void Server::remove(const Event::Request &ws) {
+void Server::remove(const HTTP::Request &ws) {
   websockets.erase(ws.getID());
 }
 
@@ -142,18 +142,18 @@ void Server::initHandlers() {
 
   // Auth, order is important here
   SmartPointer<SessionManager>::Phony sessionMan(&app.getSessionManager());
-  addHandler(new Event::HTTPSessionHandler(sessionMan));
-  addHandler(HTTP_GET, "/login", new Event::HTTPOAuth2LoginHandler
+  addHandler(new HTTP::SessionHandler(sessionMan));
+  addHandler(HTTP_GET, "/login", new HTTP::OAuth2LoginHandler
             (app.getClient(), SmartPointer<GoogleOAuth2>::Phony(&googleOAuth2),
              sessionMan));
 
   // Redirect failed auth
-  auto cb = [] (Event::Request &req) {
+  auto cb = [] (HTTP::Request &req) {
     if (String::startsWith(req.getURI().getPath(), "/api"))
       req.reply(HTTP_UNAUTHORIZED);
     else req.redirect("/login");
   };
-  addHandler(new Event::ACLHandler(aclSet, cb));
+  addHandler(new HTTP::ACLHandler(aclSet, cb));
 
   ADD_HANDLER(HTTP_ANY, "^/((login)|(admin))$", forceSecure);
   ADD_HANDLER(HTTP_GET, ".*",                   apiXFrameOptions);
@@ -185,17 +185,17 @@ void Server::initHandlers() {
 
   if (options["http-pub"].hasValue())
     addHandler(
-      HTTP_GET, "/pub/.*", new Event::FileHandler(options["http-pub"], 5));
+      HTTP_GET, "/pub/.*", new HTTP::FileHandler(options["http-pub"], 5));
 }
 
 
 void Server::init() {
   // Init web server
-  Event::WebServer::init();
+  HTTP::WebServer::init();
 
   // Web server event priorities
-  for (auto it = getPorts().begin(); it != getPorts().end(); it++)
-    (*it)->setPriority((*it)->isSecure() ? 4 : 8);
+  for (auto &port: getPorts())
+    port->setPriority(port->isSecure() ? 4 : 8);
 
   // Init SSL
   init(*getSSLContext());
@@ -213,18 +213,19 @@ void Server::init() {
 }
 
 
-SmartPointer<Event::Request> Server::createRequest
-(Event::RequestMethod method, const URI &uri, const Version &version) {
+SmartPointer<HTTP::Request> Server::createRequest
+(const cb::SmartPointer<cb::HTTP::Conn> &connection,
+ HTTP::Method method, const URI &uri, const Version &version) {
   if (method == HTTP_GET && uri.getPath() == "/ws/client")
-    return add(new ClientWS(app, uri, version));
+    return add(new ClientWS(app, connection, uri, version));
 
   if (method == HTTP_GET && uri.getPath() == "/ws/account")
-    return add(new AccountWS(app, uri, version));
+    return add(new AccountWS(app, connection, uri, version));
 
   if (method == HTTP_GET && uri.getPath() == "/api/ws")
-    return add(new APIWebsocket(app, uri, version));
+    return add(new APIWebsocket(app, connection, uri, version));
 
-  return Event::WebServer::createRequest(method, uri, version);
+  return HTTP::WebServer::createRequest(connection, method, uri, version);
 }
 
 
@@ -317,9 +318,9 @@ void Server::writeConnections(JSON::Sink &sink) const {
 void Server::writeHelp(JSON::Sink &sink) const {options.write(sink);}
 
 
-bool Server::apiCORS(Event::Request &req) {
-  Event::Headers &hdrsIn  = req.getInputHeaders();
-  Event::Headers &hdrsOut = req.getOutputHeaders();
+bool Server::apiCORS(HTTP::Request &req) {
+  HTTP::Headers &hdrsIn  = req.getInputHeaders();
+  HTTP::Headers &hdrsOut = req.getOutputHeaders();
 
   hdrsOut.set("Access-Control-Allow-Origin", "*");
   hdrsOut.set("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
@@ -337,72 +338,58 @@ bool Server::apiCORS(Event::Request &req) {
 }
 
 
-bool Server::apiNotFound(Event::Request &req) {
+bool Server::apiNotFound(HTTP::Request &req) {
   req.sendJSONError(HTTP_NOT_FOUND, "API endpoint not found");
   return true;
 }
 
 
-void Server::apiLogout(Event::Request &req, const JSON::ValuePtr &msg) {
+void Server::apiLogout(HTTP::Request &req, const JSON::ValuePtr &msg) {
   if (req.getSession().isNull()) THROWX("Not logged in", HTTP_BAD_REQUEST);
   else app.getSessionManager().closeSession(req.getSession()->getID());
 }
 
 
-bool Server::apiXFrameOptions(Event::Request &req) {
-  Event::Headers &hdrs = req.getOutputHeaders();
+bool Server::apiXFrameOptions(HTTP::Request &req) {
+  HTTP::Headers &hdrs = req.getOutputHeaders();
   hdrs.set("X-Frame-Options", "DENY");
   return false; // Continue processing
 }
 
 
-void Server::apiServer(Event::Request &req, const JSON::ValuePtr &msg) {
+void Server::apiServer(HTTP::Request &req, const JSON::ValuePtr &msg) {
   writeServer(*req.getJSONWriter());
 }
 
 
-void Server::apiInfo(Event::Request &req, const JSON::ValuePtr &msg) {
+void Server::apiInfo(HTTP::Request &req, const JSON::ValuePtr &msg) {
   writeInfo(*req.getJSONWriter());
 }
 
 
-void Server::apiStats(Event::Request &req, const JSON::ValuePtr &msg) {
+void Server::apiStats(HTTP::Request &req, const JSON::ValuePtr &msg) {
   writeStats(*req.getJSONWriter());
 }
 
 
-void Server::apiConnections(Event::Request &req, const JSON::ValuePtr &msg) {
+void Server::apiConnections(HTTP::Request &req, const JSON::ValuePtr &msg) {
   writeConnections(*req.getJSONWriter());
 }
 
 
-void Server::apiHelp(Event::Request &req, const JSON::ValuePtr &msg) {
+void Server::apiHelp(HTTP::Request &req, const JSON::ValuePtr &msg) {
   writeHelp(*req.getJSONWriter());
 }
 
 
-bool Server::forceSecure(Event::Request &req) {
+bool Server::forceSecure(HTTP::Request &req) {
   if (req.isSecure()) return false;
-
-  // Redirect to first secure port
-  for (auto it = getPorts().begin(); it != getPorts().end(); it++)
-    if ((*it)->isSecure()) {
-      auto &addr = (*it)->getAddr();
-
-      URI redirectURI = req.getURI();
-      redirectURI.setScheme("https");
-      redirectURI.setHost(addr.toString(false));
-      redirectURI.setPort(addr.getPort());
-      req.redirect(redirectURI);
-      return true;
-    }
-
-  req.reply(HTTP_UNAUTHORIZED, "No secure port configured");
+  req.reply(HTTP_UNAUTHORIZED);
   return true;
 }
 
 
-bool Server::loginPage(Event::Request &req) {
+bool Server::loginPage(HTTP::Request &req) {
   // Get user name
   string user = req.getUser();
 

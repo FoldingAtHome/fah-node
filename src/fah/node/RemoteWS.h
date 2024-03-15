@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include <cbang/event/JSONWebsocket.h>
+#include <cbang/ws/JSONWebsocket.h>
 
 
 namespace FAH {
@@ -36,7 +36,7 @@ namespace FAH {
     class App;
     class Account;
 
-    class RemoteWS : public cb::Event::JSONWebsocket {
+    class RemoteWS : public cb::WS::JSONWebsocket {
     protected:
       App &app;
       std::string id;
@@ -44,7 +44,9 @@ namespace FAH {
       cb::SmartPointer<Account> account;
 
     public:
-      RemoteWS(App &app, const cb::URI &uri, const cb::Version &version);
+      RemoteWS(
+        App &app, const cb::SmartPointer<cb::HTTP::Conn> &connection,
+        const cb::URI &uri, const cb::Version &version);
       ~RemoteWS();
 
       const std::string &getID() const {return id;}
@@ -53,7 +55,7 @@ namespace FAH {
       void setAccount(const cb::SmartPointer<Account> account)
         {this->account = account;}
 
-      // From cb::Event::Request
+      // From cb::HTTP::Request
       void onComplete();
 
     protected:

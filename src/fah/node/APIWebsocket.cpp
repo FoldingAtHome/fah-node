@@ -32,15 +32,17 @@
 #include "Server.h"
 
 #include <cbang/json/Builder.h>
-#include <cbang/event/HTTPConn.h>
+#include <cbang/http/Conn.h>
 
 using namespace std;
 using namespace cb;
 using namespace FAH::Node;
 
 
-APIWebsocket::APIWebsocket(App &app, const URI &uri, const Version &version) :
-  cb::Event::JSONWebsocket(uri, version), app(app) {}
+APIWebsocket::APIWebsocket(
+  App &app, const SmartPointer<HTTP::Conn> &connection, const URI &uri,
+  const Version &version) :
+  cb::WS::JSONWebsocket(connection, uri, version), app(app) {}
 
 
 void APIWebsocket::onMessage(const JSON::ValuePtr &msg) {

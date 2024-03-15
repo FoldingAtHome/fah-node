@@ -50,13 +50,13 @@ namespace FAH {
       void connected(const ClientWS &client);
       void disconnected(const std::string &id);
 
-      // From cb::Event::JSONWebsocket
+      // From cb::WS::JSONWebsocket
       void onMessage(const cb::JSON::ValuePtr &msg);
 
-      // From cb::Event::Websocket
+      // From cb::WS::Websocket
       void onOpen();
 
-      // From cb::Event::Request
+      // From cb::HTTP::Request
       void onComplete();
     };
   }

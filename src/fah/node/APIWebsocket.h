@@ -28,25 +28,27 @@
 
 #pragma once
 
-#include <cbang/event/JSONWebsocket.h>
+#include <cbang/ws/JSONWebsocket.h>
 
 namespace FAH {
   namespace Node {
     class App;
 
-    class APIWebsocket : public cb::Event::JSONWebsocket {
+    class APIWebsocket : public cb::WS::JSONWebsocket {
       App &app;
 
     public:
-      APIWebsocket(App &app, const cb::URI &uri, const cb::Version &version);
+      APIWebsocket(
+        App &app, const cb::SmartPointer<cb::HTTP::Conn> &connection,
+        const cb::URI &uri, const cb::Version &version);
 
-      // From cb::Event::JSONWebsocket
+      // From cb::WS::JSONWebsocket
       void onMessage(const cb::JSON::ValuePtr &msg);
 
-      // From cb::Event::Websocket
+      // From cb::WS::Websocket
       void onOpen();
 
-      // From cb::Event::Request
+      // From cb::HTTP::Request
       void onComplete();
     };
   }

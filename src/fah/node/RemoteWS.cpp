@@ -33,15 +33,17 @@
 
 #include <cbang/openssl/Digest.h>
 #include <cbang/log/Logger.h>
-#include <cbang/event/HTTPConn.h>
+#include <cbang/http/Conn.h>
 
 using namespace std;
 using namespace cb;
 using namespace FAH::Node;
 
 
-RemoteWS::RemoteWS(App &app, const URI &uri, const Version &version) :
-  cb::Event::JSONWebsocket(uri, version), app(app) {}
+RemoteWS::RemoteWS(
+  App &app, const SmartPointer<HTTP::Conn> &connection,
+  const URI &uri, const Version &version) :
+  cb::WS::JSONWebsocket(connection, uri, version), app(app) {}
 
 
 RemoteWS::~RemoteWS() {}

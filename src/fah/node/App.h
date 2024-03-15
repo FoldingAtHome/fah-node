@@ -41,7 +41,7 @@
 #include <cbang/openssl/KeyPair.h>
 
 #include <cbang/event/Base.h>
-#include <cbang/event/Client.h>
+#include <cbang/http/Client.h>
 #include <cbang/dns/Base.h>
 
 #include <ostream>
@@ -60,7 +60,7 @@ namespace FAH {
     protected:
       cb::Event::Base base;
       cb::DNS::Base dns;
-      cb::Event::Client client;
+      cb::HTTP::Client client;
       cb::KeyPair privateKey;
       cb::ACMEv2::Account account;
       cb::SessionManager sessionManager;
@@ -83,7 +83,7 @@ namespace FAH {
 
       cb::Event::Base    &getEventBase()      {return base;}
       cb::DNS::Base      &getEventDNS()       {return dns;}
-      cb::Event::Client  &getClient()         {return client;}
+      cb::HTTP::Client  &getClient()         {return client;}
       cb::SessionManager &getSessionManager() {return sessionManager;}
       cb::RateSet        &getStats()          {return stats;}
       Server             &getServer()         {return *server;}
