@@ -32,16 +32,11 @@
 #include "Account.h"
 
 #include <cbang/Catch.h>
-#include <cbang/Zap.h>
-
 #include <cbang/config/Options.h>
-
 #include <cbang/os/SystemUtilities.h>
 #include <cbang/os/DirectoryWalker.h>
-
 #include <cbang/event/Event.h>
 #include <cbang/event/FDPool.h>
-
 #include <cbang/log/Logger.h>
 #include <cbang/time/Time.h>
 #include <cbang/debug/Debugger.h>
@@ -126,9 +121,7 @@ App::App() :
 }
 
 
-App::~App() {
-  zap(server);
-}
+App::~App() {delete server;}
 
 
 bool App::_hasFeature(int feature) {
