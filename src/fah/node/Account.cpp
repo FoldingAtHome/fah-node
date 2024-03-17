@@ -47,7 +47,7 @@ Account::Account(App &app, const string &id) : app(app), id(id) {
 
   for (auto it = db.first(); it.valid(); it++)
     try {
-      broadcastMsgs[it.key()] = JSON::Reader::parseString(it.value());
+      broadcastMsgs[it.key()] = JSON::Reader::parse(it.value());
     } CATCH_ERROR;
 }
 
