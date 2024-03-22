@@ -31,7 +31,7 @@
 #include <cbang/http/WebServer.h>
 #include <cbang/util/ACLSet.h>
 #include <cbang/json/JSON.h>
-#include <cbang/auth/GoogleOAuth2.h>
+#include <cbang/oauth2/GoogleProvider.h>
 
 #include <cstdint>
 #include <string>
@@ -45,12 +45,11 @@ namespace FAH {
     class App;
     class RemoteWS;
 
-    class Server : public cb::HTTP::WebServer,
-                   public cb::HTTP::HandlerFactory {
+    class Server : public cb::HTTP::WebServer {
     protected:
       App &app;
       cb::Options &options;
-      cb::GoogleOAuth2 googleOAuth2;
+      cb::OAuth2::GoogleProvider googleOAuth2;
       cb::ACLSet aclSet;
 
       typedef cb::SmartPointer<cb::HTTP::Request> RequestPtr;
@@ -96,7 +95,6 @@ namespace FAH {
       void apiHelp         (EReq &req, const JVP &msg);
 
       // Webpage handler methods
-
       bool forceSecure     (EReq &req);
       bool loginPage       (EReq &req);
     };

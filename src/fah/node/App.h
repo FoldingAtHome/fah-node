@@ -33,16 +33,14 @@
 #include <cbang/db/LevelDB.h>
 #include <cbang/json/Sink.h>
 #include <cbang/acmev2/Account.h>
-
-#include <cbang/net/SessionManager.h>
-
+#include <cbang/http/SessionManager.h>
+#include <cbang/event/Base.h>
+#include <cbang/http/Client.h>
+#include <cbang/dns/Base.h>
 #include <cbang/openssl/Certificate.h>
 #include <cbang/openssl/SSLContext.h>
 #include <cbang/openssl/KeyPair.h>
 
-#include <cbang/event/Base.h>
-#include <cbang/http/Client.h>
-#include <cbang/dns/Base.h>
 
 #include <ostream>
 #include <string>
@@ -63,7 +61,7 @@ namespace FAH {
       cb::HTTP::Client client;
       cb::KeyPair privateKey;
       cb::ACMEv2::Account account;
-      cb::SessionManager sessionManager;
+      cb::HTTP::SessionManager sessionManager;
       cb::RateSet stats;
 
       Server *server;
@@ -83,8 +81,8 @@ namespace FAH {
 
       cb::Event::Base    &getEventBase()      {return base;}
       cb::DNS::Base      &getEventDNS()       {return dns;}
-      cb::HTTP::Client  &getClient()         {return client;}
-      cb::SessionManager &getSessionManager() {return sessionManager;}
+      cb::HTTP::Client  &getClient()          {return client;}
+      cb::HTTP::SessionManager &getSessionManager() {return sessionManager;}
       cb::RateSet        &getStats()          {return stats;}
       Server             &getServer()         {return *server;}
 

@@ -42,14 +42,14 @@
 #include <cbang/util/RateSet.h>
 
 #include <cbang/http/Headers.h>
-#include <cbang/event/FDPool.h>
 #include <cbang/http/Conn.h>
 #include <cbang/http/FileHandler.h>
 #include <cbang/http/ACLHandler.h>
 #include <cbang/http/ResourceHandler.h>
 #include <cbang/http/SessionHandler.h>
-#include <cbang/http/OAuth2LoginHandler.h>
 
+#include <cbang/oauth2/LoginHandler.h>
+#include <cbang/event/FDPool.h>
 #include <cbang/openssl/SSLContext.h>
 #include <cbang/log/Logger.h>
 #include <cbang/config/Options.h>
@@ -68,9 +68,8 @@ namespace FAH {
 
 
 Server::Server(App &app) :
-  HTTP::WebServer(app.getOptions(), app.getEventBase(), new SSLContext,
-                   SmartPointer<HTTP::HandlerFactory>::Phony(this)),
-  app(app), options(app.getOptions()), googleOAuth2(app.getOptions()) {
+  HTTP::WebServer(app.getOptions(), app.getEventBase(), new SSLContext),
+  app(app), options(app.getOptions()) {
 
   setLogPrefix(true);
 
@@ -103,6 +102,7 @@ Server::Server(App &app) :
   options.popCategory();
 
   // Google oauth2
+  googleOAuth2.addOptions(options);
   options.alias("google-client-id",     "oauth2-client-id");
   options.alias("google-client-secret", "oauth2-client-secret");
   options.alias("google-redirect-base", "oauth2-redirect-base");
@@ -141,11 +141,10 @@ void Server::initHandlers() {
   addMember<Server>(METHODS, PATTERN, this, &Server::FUNC)
 
   // Auth, order is important here
-  SmartPointer<SessionManager>::Phony sessionMan(&app.getSessionManager());
+  auto sessionMan = SmartPhony(&app.getSessionManager());
   addHandler(new HTTP::SessionHandler(sessionMan));
-  addHandler(HTTP_GET, "/login", new HTTP::OAuth2LoginHandler
-            (app.getClient(), SmartPointer<GoogleOAuth2>::Phony(&googleOAuth2),
-             sessionMan));
+  addHandler(HTTP_GET, "/login", new OAuth2::LoginHandler
+            (app.getClient(), SmartPhony(&googleOAuth2), sessionMan));
 
   // Redirect failed auth
   auto cb = [] (HTTP::Request &req) {
