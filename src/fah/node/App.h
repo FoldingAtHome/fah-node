@@ -36,7 +36,6 @@
 #include <cbang/http/SessionManager.h>
 #include <cbang/event/Base.h>
 #include <cbang/http/Client.h>
-#include <cbang/dns/Base.h>
 #include <cbang/openssl/Certificate.h>
 #include <cbang/openssl/SSLContext.h>
 #include <cbang/openssl/KeyPair.h>
@@ -57,7 +56,6 @@ namespace FAH {
     class App : public cb::ServerApplication {
     protected:
       cb::Event::Base base;
-      cb::DNS::Base dns;
       cb::HTTP::Client client;
       cb::KeyPair privateKey;
       cb::ACMEv2::Account account;
@@ -80,7 +78,6 @@ namespace FAH {
       static bool _hasFeature(int feature);
 
       cb::Event::Base    &getEventBase()      {return base;}
-      cb::DNS::Base      &getEventDNS()       {return dns;}
       cb::HTTP::Client  &getClient()          {return client;}
       cb::HTTP::SessionManager &getSessionManager() {return sessionManager;}
       cb::RateSet        &getStats()          {return stats;}

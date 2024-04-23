@@ -68,12 +68,15 @@ namespace FAH {
 
 
 Server::Server(App &app) :
-  HTTP::WebServer(app.getOptions(), app.getEventBase(), new SSLContext),
-  app(app), options(app.getOptions()) {
+  HTTP::Server(app.getEventBase(), new SSLContext), app(app) {
+  addOptions(app.getOptions());
 
   setLogPrefix(true);
+  setPortPriority(8);
+  setSecurePortPriority(4);
 
   // HTTP::Server
+  auto &options = app.getOptions();
   options["http-addresses" ].setDefault("0.0.0.0:8080");
   options["https-addresses"].setDefault("0.0.0.0:8084");
 
@@ -98,7 +101,7 @@ Server::Server(App &app) :
   options.add("ssl-cipher-list", "Allowed OpenSSL ciphers")
     ->setDefault("HIGH:!aNULL:!PSK:!SRP:!MD5:!RC4");
   options.add("admins", "Grant admin access to these email addresses")
-    ->setType(Option::STRINGS_TYPE);
+    ->setType(Option::TYPE_STRINGS);
   options.popCategory();
 
   // Google oauth2
@@ -125,8 +128,9 @@ void Server::remove(const HTTP::Request &ws) {
 }
 
 
-void Server::init(SSLContext &ctx) {
+void Server::initSSL(SSLContext &ctx) {
   // Set allowed SSL ciphers
+  auto &options = app.getOptions();
   if (options["ssl-cipher-list"].hasValue() &&
       !options["ssl-cipher-list"].toString().empty())
     ctx.setCipherList(options["ssl-cipher-list"]);
@@ -167,6 +171,7 @@ void Server::initHandlers() {
   ADD_HANDLER(HTTP_ANY, "/api/.*",              apiNotFound);
 
   // Add Web page handlers
+  auto &options = app.getOptions();
   if (options["http-root"].hasValue()) {
     string root = options["http-root"];
 
@@ -189,16 +194,12 @@ void Server::initHandlers() {
 
 
 void Server::init() {
-  // Init web server
-  HTTP::WebServer::init();
-
-  // Web server event priorities
-  for (auto &port: getPorts())
-    port->setPriority(port->isSecure() ? 4 : 8);
+  // Init HTTP server
+  HTTP::Server::init(app.getOptions());
 
   // Init SSL
-  init(*getSSLContext());
-  init(*app.getClient().getSSLContext());
+  initSSL(*getSSLContext());
+  initSSL(*app.getClient().getSSLContext());
 
   // Load ACL
   stringstream str;
@@ -224,7 +225,7 @@ SmartPointer<HTTP::Request> Server::createRequest
   if (method == HTTP_GET && uri.getPath() == "/api/ws")
     return add(new APIWebsocket(app, connection, uri, version));
 
-  return HTTP::WebServer::createRequest(connection, method, uri, version);
+  return HTTP::Server::createRequest(connection, method, uri, version);
 }
 
 
@@ -314,7 +315,7 @@ void Server::writeConnections(JSON::Sink &sink) const {
 }
 
 
-void Server::writeHelp(JSON::Sink &sink) const {options.write(sink);}
+void Server::writeHelp(JSON::Sink &sink) const {app.getOptions().write(sink);}
 
 
 bool Server::apiCORS(HTTP::Request &req) {

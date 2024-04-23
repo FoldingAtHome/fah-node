@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include <cbang/http/WebServer.h>
+#include <cbang/http/Server.h>
 #include <cbang/util/ACLSet.h>
 #include <cbang/json/JSON.h>
 #include <cbang/oauth2/GoogleProvider.h>
@@ -38,17 +38,14 @@
 #include <map>
 
 
-namespace cb {class Options;}
-
 namespace FAH {
   namespace Node {
     class App;
     class RemoteWS;
 
-    class Server : public cb::HTTP::WebServer {
+    class Server : public cb::HTTP::Server {
     protected:
       App &app;
-      cb::Options &options;
       cb::OAuth2::GoogleProvider googleOAuth2;
       cb::ACLSet aclSet;
 
@@ -62,13 +59,12 @@ namespace FAH {
       const RequestPtr &add(const RequestPtr &ws);
       void remove(const cb::HTTP::Request &ws);
 
-      void init(cb::SSLContext &ctx);
+      void initSSL(cb::SSLContext &ctx);
       void initHandlers();
-
-      // From cb::HTTP::WebServer
       void init();
 
-      // From cb::Event::HTTPHandler
+      // From cb::HTTP::Server
+      using cb::HTTP::Server::init;
       cb::SmartPointer<cb::HTTP::Request> createRequest
       (const cb::SmartPointer<cb::HTTP::Conn> &connection,
        cb::HTTP::Method method, const cb::URI &uri,
