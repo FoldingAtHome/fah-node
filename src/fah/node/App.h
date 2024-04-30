@@ -33,9 +33,10 @@
 #include <cbang/db/LevelDB.h>
 #include <cbang/json/Sink.h>
 #include <cbang/acmev2/Account.h>
-#include <cbang/http/SessionManager.h>
 #include <cbang/event/Base.h>
+#include <cbang/event/Event.h>
 #include <cbang/http/Client.h>
+#include <cbang/http/SessionManager.h>
 #include <cbang/openssl/Certificate.h>
 #include <cbang/openssl/SSLContext.h>
 #include <cbang/openssl/KeyPair.h>
@@ -44,6 +45,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <map>
 
 
 namespace cb {namespace Event {class Event;}}
@@ -71,17 +73,19 @@ namespace FAH {
 
       unsigned signalCount = 0;
 
+      std::map<std::string, cb::Event::EventPtr> events;
+
     public:
       App();
       ~App();
 
       static bool _hasFeature(int feature);
 
-      cb::Event::Base    &getEventBase()      {return base;}
-      cb::HTTP::Client  &getClient()          {return client;}
+      cb::Event::Base    &getEventBase()            {return base;}
+      cb::HTTP::Client   &getClient()               {return client;}
       cb::HTTP::SessionManager &getSessionManager() {return sessionManager;}
-      cb::RateSet        &getStats()          {return stats;}
-      Server             &getServer()         {return *server;}
+      cb::RateSet        &getStats()                {return stats;}
+      Server             &getServer()               {return *server;}
 
       const cb::SmartPointer<Account> &getAccount(const std::string &id);
 
@@ -94,7 +98,7 @@ namespace FAH {
 
     private:
       void initCerts();
-      void addSignalEvent(int sig);
+      cb::Event::EventPtr addSignalEvent(int sig);
       void openDB();
       void signalEvent(cb::Event::Event &e, int signal, unsigned flags);
       void moveLogsEvent();

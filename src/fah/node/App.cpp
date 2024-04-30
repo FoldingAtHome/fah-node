@@ -101,8 +101,8 @@ App::App() :
   Event::Event::enableLogging(3);
 
   // Handle exit signals
-  addSignalEvent(SIGINT);
-  addSignalEvent(SIGTERM);
+  events["sigint"]  = addSignalEvent(SIGINT);
+  events["sigterm"] = addSignalEvent(SIGTERM);
 
   // Ignore SIGPIPE
   ::signal(SIGPIPE, SIG_IGN);
@@ -288,10 +288,11 @@ void App::initCerts() {
 }
 
 
-void App::addSignalEvent(int sig) {
+Event::EventPtr App::addSignalEvent(int sig) {
   auto event = base.newSignal(sig, this, &App::signalEvent);
   event->setPriority(0);
   event->add();
+  return event;
 }
 
 
