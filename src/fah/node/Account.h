@@ -58,7 +58,7 @@ namespace FAH {
       bool isEmpty() const {return accounts.empty() && clients.empty();}
 
       AccountWSPtr getSession(const std::string &sid) const;
-      const ClientWSPtr &getClient(const std::string &id) const;
+      ClientWSPtr findClient(const std::string &id) const;
       void add(const AccountWSPtr &account);
       void add(const ClientWSPtr  &client);
       void removeAccount(const std::string &id);

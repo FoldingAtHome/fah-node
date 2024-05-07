@@ -58,10 +58,9 @@ SmartPointer<AccountWS> Account::getSession(const string &sid) const {
 }
 
 
-const SmartPointer<ClientWS> &Account::getClient(const string &id) const {
+SmartPointer<ClientWS> Account::findClient(const string &id) const {
   auto it = clients.find(id);
-  if (it == clients.end()) THROW("Client with ID '" << id << "' not found");
-  return it->second;
+  return it == clients.end() ? 0 : it->second;
 }
 
 

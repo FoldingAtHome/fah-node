@@ -75,8 +75,14 @@ void AccountWS::onMessage(const JSON::ValuePtr &msg) {
   // Forward messages to client
   if (type == "message") {
     const string &cid = msg->getString("id");
-    LOG_DEBUG(3, "Account " << getID() << " sent message to " << cid);
-    return account->getClient(cid)->send(*msg);
+    auto client = account->findClient(cid);
+    LOG_DEBUG(3, "Account " << getID() << " sending message to " << cid);
+
+    if (client.isSet()) return client->send(*msg);
+    else {
+      LOG_WARNING("Client " << cid << " not found");
+      return;
+    }
   }
 
   // Broadcast account state to all clients and accounts

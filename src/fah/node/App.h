@@ -40,6 +40,7 @@
 #include <cbang/openssl/Certificate.h>
 #include <cbang/openssl/SSLContext.h>
 #include <cbang/openssl/KeyPair.h>
+#include <cbang/util/LifetimeManager.h>
 
 
 #include <ostream>
@@ -73,7 +74,7 @@ namespace FAH {
 
       unsigned signalCount = 0;
 
-      std::map<std::string, cb::Event::EventPtr> events;
+      cb::LifetimeManager ltm;
 
     public:
       App();
@@ -98,7 +99,7 @@ namespace FAH {
 
     private:
       void initCerts();
-      cb::Event::EventPtr addSignalEvent(int sig);
+      void addSignalEvent(int sig);
       void openDB();
       void signalEvent(cb::Event::Event &e, int signal, unsigned flags);
       void moveLogsEvent();
