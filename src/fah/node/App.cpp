@@ -289,7 +289,7 @@ void App::initCerts() {
 
 
 void App::addSignalEvent(int sig) {
-  auto event = ltm.add(base.newSignal(sig, this, &App::signalEvent));
+  auto event = ltm.addLTO(base.newSignal(sig, this, &App::signalEvent));
   event->setPriority(0);
   event->add();
 }

@@ -56,7 +56,7 @@ namespace FAH {
         {this->account = account;}
 
       // From cb::HTTP::Request
-      void onComplete();
+      void onComplete() override;
 
     protected:
       void onLogin(const cb::JSON::ValuePtr &msg);

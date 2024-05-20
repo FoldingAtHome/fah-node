@@ -43,13 +43,13 @@ namespace FAH {
         const cb::URI &uri, const cb::Version &version);
 
       // From cb::WS::JSONWebsocket
-      void onMessage(const cb::JSON::ValuePtr &msg);
+      void onMessage(const cb::JSON::ValuePtr &msg) override;
 
       // From cb::WS::Websocket
-      void onOpen();
+      void onOpen() override;
 
       // From cb::HTTP::Request
-      void onComplete();
+      void onComplete() override;
     };
   }
 }

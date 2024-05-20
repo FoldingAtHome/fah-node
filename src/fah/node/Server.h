@@ -68,7 +68,7 @@ namespace FAH {
       cb::SmartPointer<cb::HTTP::Request> createRequest
       (const cb::SmartPointer<cb::HTTP::Conn> &connection,
        cb::HTTP::Method method, const cb::URI &uri,
-       const cb::Version &version);
+       const cb::Version &version) override;
 
       void writeServer     (cb::JSON::Sink &sink) const;
       void writeInfo       (cb::JSON::Sink &sink) const;

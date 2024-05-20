@@ -43,10 +43,10 @@ namespace FAH {
       void closeSession(const std::string &sid);
 
       // From cb::WS::JSONWebsocket
-      void onMessage(const cb::JSON::ValuePtr &msg);
+      void onMessage(const cb::JSON::ValuePtr &msg) override;
 
       // From cb::HTTP::Request
-      void onComplete();
+      void onComplete() override;
     };
   }
 }

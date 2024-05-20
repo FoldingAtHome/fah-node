@@ -93,9 +93,9 @@ namespace FAH {
       cb::LevelDB getDB(const std::string &ns = "config:");
 
       // From Application
-      int init(int argc, char *argv[]);
-      void run(); ///< Start the node server
-      void requestExit();
+      int init(int argc, char *argv[]) override;
+      void run() override; ///< Start the node server
+      void requestExit() override;
 
     private:
       void initCerts();
