@@ -60,7 +60,7 @@ namespace FAH {
 
 App::App() :
   ServerApplication("Folding@home Node Server", App::_hasFeature),
-  base(true, true, 16), client(base, new SSLContext), account(client),
+  base(true, 16), client(base, new SSLContext), account(client),
   sessionManager(options), stats(60), server(new Server(*this)) {
 
   // Init Debugger before threads start
