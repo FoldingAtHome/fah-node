@@ -145,10 +145,10 @@ void Server::initHandlers() {
   addMember<Server>(METHODS, PATTERN, this, &Server::FUNC)
 
   // Auth, order is important here
-  auto sessionMan = SmartPhony(&app.getSessionManager());
+  auto sessionMan = PhonyPtr(&app.getSessionManager());
   addHandler(new HTTP::SessionHandler(sessionMan));
   addHandler(HTTP_GET, "/login", new OAuth2::LoginHandler
-            (app.getClient(), SmartPhony(&googleOAuth2), sessionMan));
+            (app.getClient(), PhonyPtr(&googleOAuth2), sessionMan));
 
   // Redirect failed auth
   auto cb = [] (HTTP::Request &req) {
