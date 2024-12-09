@@ -49,9 +49,7 @@ void ClientWS::closeSession(const string &sid) {
 }
 
 
-void ClientWS::onMessage(const JSON::ValuePtr &msg) {
-  string type = msg->getString("type");
-
+void ClientWS::onMessage(const string &type, const JSON::ValuePtr &msg) {
   if (type == "login") {
     onLogin(msg);
 

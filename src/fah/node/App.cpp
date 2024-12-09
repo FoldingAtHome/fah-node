@@ -85,17 +85,17 @@ App::App() :
   options.popCategory();
 
   // Configure logger
-  options["verbosity"].setDefault(3);
-  options["log"].setDefault("log.txt");
-  options["log-thread-id"].setDefault(false);
-  options["log-thread-prefix"].setDefault(true);
-  options["log-short-level"].setDefault(true);
-  options["log-rotate"].setDefault(true);
-  options["log-rotate-max"].setDefault(256);
-  options["log-rotate-period"].setDefault(Time::SEC_PER_DAY);
+  options["verbosity"             ].setDefault(3);
+  options["log"                   ].setDefault("log.txt");
+  options["log-thread-id"         ].setDefault(false);
+  options["log-thread-prefix"     ].setDefault(true);
+  options["log-short-level"       ].setDefault(true);
+  options["log-rotate"            ].setDefault(true);
+  options["log-rotate-max"        ].setDefault(256);
+  options["log-rotate-period"     ].setDefault(Time::SEC_PER_DAY);
   options["log-rotate-compression"].setDefault("bzip2");
 
-  options["session-cookie"].setDefault("fah_node_sid");
+  options["session-cookie"        ].setDefault("fah_node_sid");
 
   // Enable libevent logging
   Event::Event::enableLogging(3);
@@ -165,7 +165,6 @@ int App::init(int argc, char *argv[]) {
   // Set up outgoing client
   if (options["bind-ip"].isSet())
     client.setBindAddress(SockAddr::parse(options["bind-ip"]));
-  client.setStats(SmartPointer<RateSet>::Phony(&stats));
 
   server->init();
   openDB();
@@ -183,7 +182,7 @@ int App::init(int argc, char *argv[]) {
 
 
 void App::run() {
-  LOG_INFO(2, "Started");
+  LOG_INFO(1, "Started");
 
   // Main loop
   base.dispatch();
@@ -323,7 +322,7 @@ void App::signalEvent(Event::Event &e, int signal, unsigned flags) {
 
 
 void App::moveLogsEvent() {
-  stats.event("move-logs-task");
+  stats.event("move-logs");
   string dir = options["move-log-dir"];
   SystemUtilities::ensureDirectory(dir);
 

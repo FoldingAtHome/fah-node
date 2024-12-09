@@ -110,8 +110,8 @@ Server::Server(App &app) :
   options.alias("google-client-secret", "oauth2-client-secret");
   options.alias("google-redirect-base", "oauth2-redirect-base");
 
-  // Stats logging
-  setStats(SmartPointer<RateSet>::Phony(&app.getStats()));
+  // HTTP rate stats
+  setStats(new RateSet(60));
 }
 
 
@@ -123,9 +123,7 @@ const SmartPointer<HTTP::Request> &Server::add(const RequestPtr &ws) {
 }
 
 
-void Server::remove(const HTTP::Request &ws) {
-  websockets.erase(ws.getID());
-}
+void Server::remove(const HTTP::Request &ws) {websockets.erase(ws.getID());}
 
 
 void Server::initSSL(SSLContext &ctx) {
@@ -243,20 +241,48 @@ void Server::writeInfo(JSON::Sink &sink) const {
 }
 
 
+void Server::writeRates(JSON::Sink &sink) const {
+  sink.beginDict();
+
+  // Network rates
+  sink.insertDict("net");
+  auto &base = app.getEventBase();
+  sink.insert("receiving", base.getPool().getReadRate().get());
+  sink.insert("sending",   base.getPool().getWriteRate().get());
+  sink.endDict();
+
+  // HTTP event rates
+  sink.insertDict("http");
+  getStats()->insert(sink, true);
+  sink.endDict();
+
+  // Event rates
+  sink.insertDict("event");
+  app.getStats().insert(sink, true);
+  sink.endDict();
+
+  sink.endDict();
+}
+
+
 void Server::writeStats(JSON::Sink &sink) const {
   sink.beginDict();
 
-  auto &base = app.getEventBase();
-  sink.insertDict("net");
-  sink.insert("receiving", base.getPool().getReadRate().get());
-  sink.insert("sending",   base.getPool().getWriteRate().get());
-  getStats()->insert(sink);
-  sink.endDict();
+  // Connection count
+  sink.insert("connections", getConnections().size());
 
-  sink.insert("http-conns", getConnections().size());
+  // Rates
+  sink.beginInsert("rates");
+  writeRates(sink);
+
+  // Log errors & warnings
+  sink.beginInsert("log");
+  Logger::instance().writeRates(sink);
+  sink.endDict();
 
   // Events
   sink.insertDict("events");
+  auto &base = app.getEventBase();
   sink.insert("total",  base.getNumEvents());
   sink.insert("active", base.getNumActiveEvents());
 
@@ -266,11 +292,7 @@ void Server::writeStats(JSON::Sink &sink) const {
   for (auto it = counts.begin(); it != counts.end(); it++)
     sink.insert(String::printf("priority-%u", it->first), it->second);
 
-  sink.endDict();
-
-  // Error & warning rates
-  sink.beginInsert("log");
-  Logger::instance().writeRates(sink);
+  sink.endDict(); // events
 
   sink.endDict();
 }

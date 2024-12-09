@@ -50,8 +50,10 @@ namespace FAH {
       void connected(const ClientWS &client);
       void disconnected(const std::string &id);
 
-      // From cb::WS::JSONWebsocket
-      void onMessage(const cb::JSON::ValuePtr &msg) override;
+      // From RemoteWS
+      std::string getWSType() override {return "account";}
+      void onMessage(
+        const std::string &type, const cb::JSON::ValuePtr &msg) override;
 
       // From cb::WS::Websocket
       void onOpen() override;

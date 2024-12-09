@@ -42,8 +42,10 @@ namespace FAH {
 
       void closeSession(const std::string &sid);
 
-      // From cb::WS::JSONWebsocket
-      void onMessage(const cb::JSON::ValuePtr &msg) override;
+      // From RemoteWS
+      std::string getWSType() override {return "client";}
+      void onMessage(
+        const std::string &type, const cb::JSON::ValuePtr &msg) override;
 
       // From cb::HTTP::Request
       void onComplete() override;

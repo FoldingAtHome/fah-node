@@ -72,6 +72,7 @@ namespace FAH {
 
       void writeServer     (cb::JSON::Sink &sink) const;
       void writeInfo       (cb::JSON::Sink &sink) const;
+      void writeRates      (cb::JSON::Sink &sink) const;
       void writeStats      (cb::JSON::Sink &sink) const;
       void writeConnections(cb::JSON::Sink &sink) const;
       void writeHelp       (cb::JSON::Sink &sink) const;

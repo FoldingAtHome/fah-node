@@ -57,9 +57,7 @@ void AccountWS::disconnected(const string &id) {
 }
 
 
-void AccountWS::onMessage(const JSON::ValuePtr &msg) {
-  string type = msg->getString("type", "");
-
+void AccountWS::onMessage(const string &type, const JSON::ValuePtr &msg) {
   if (type == "login") {
     onLogin(msg);
 

@@ -13,25 +13,10 @@ export default {
 
 
   methods: {
-    load_stats(stats) {
-      this.stats.net  = {}
-      this.stats.http = {}
-      this.stats.task = {}
-
-      for (let key in stats) {
-        if (key.startsWith('HTTP_')) this.stats.http[key] = stats[key]
-        else if (key.endsWith('-task'))
-          this.stats.task[key.slice(0, key.length - 5)] = stats[key]
-        else this.stats.net[key] = stats[key]
-      }
-    },
-
-
     async update() {
       try {
         let data = await this.$api.request('stats')
         this.stats = data
-        this.load_stats(data.net)
 
       } catch (e) {
       } finally {
@@ -49,19 +34,28 @@ export default {
   template(v-else)
     h1: a(href="/api/stats" target="_top") Stats
 
+    .connections {{stats.connections.toLocaleString()}} Active Connections
     .main-stats
-      RateStats( title="Network",        :stats="stats.net")
-      RateStats( title="HTTP Responses", :stats="stats.http")
-      RateStats( title="Tasks",          :stats="stats.task")
+      template(v-for="(rates, name) of stats.rates")
+        RateStats(v-if="Object.keys(rates).length",
+          :title="name", :stats="rates")
 </template>
 
 <style lang="stylus">
-.main-page .main-stats
+.main-page
   display flex
-  gap 1em
-  justify-content center
+  flex-direction column
+  gap 0.5em
 
-  .stats .title
+  .connections
     font-weight bold
-    font-size 110%
+
+  .main-stats
+    display flex
+    gap 1em
+    justify-content center
+
+    .stats .title
+      font-weight bold
+      font-size 110%
 </style>

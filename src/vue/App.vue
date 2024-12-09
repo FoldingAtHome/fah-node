@@ -215,16 +215,17 @@ button
   overflow scroll
 
   table
-    border-bottom 2px solid black
     border-collapse collapse
-    border-right 2px solid black
     empty-cells show
     margin auto
 
+    tr:nth-child(even)
+      background #ddd
+
     td, th
       white-space nowrap
-      border 1px solid black
-      padding 0 2px
+      border 1px solid #666
+      padding 3px
 
     th
       text-align center
@@ -236,8 +237,8 @@ button
     td
       text-align left
 
-    td.progress
-      padding 0
+      &.progress
+        padding 0
 
     &.config
       th

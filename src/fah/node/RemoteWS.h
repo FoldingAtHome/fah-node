@@ -55,6 +55,15 @@ namespace FAH {
       void setAccount(const cb::SmartPointer<Account> account)
         {this->account = account;}
 
+      // Virtual interface
+      virtual std::string getWSType() = 0;
+      virtual void onMessage(
+        const std::string &type, const cb::JSON::ValuePtr &msg) = 0;
+
+      // From cb::WS::JSONWebsocket
+      using cb::WS::JSONWebsocket::onMessage;
+      void onMessage(const cb::JSON::ValuePtr &msg) override;
+
       // From cb::HTTP::Request
       void onComplete() override;
 

@@ -96,7 +96,8 @@ export default {
 <template lang="pug">
 div
   div
-    h1: a(href="/api/connections", target="_blank") Connections
+    h1: a(href="/api/connections", target="_blank")
+      | {{connections.length.toLocaleString()}} Connections
 
     h1(v-if="loading") Loading...
     table.connections(v-else)
@@ -120,9 +121,6 @@ div
 
   th
     cursor pointer
-
-  tr:nth-child(even)
-    background #ddd
 
   .totals
     font-weight bold
