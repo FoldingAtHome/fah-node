@@ -1,6 +1,6 @@
 {
   "name": "fah-node",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Folding@home is a distributed computing project using volunteered computer resources.\n\nfah-node can be used to authenticate, monitor and control your swarm of Folding@home clients remotely.",
   "author": "Joseph Coffland <joseph@cauldrondevelopment.com>",
   "org": "foldingathome.org",
