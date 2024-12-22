@@ -40,6 +40,7 @@
 
 #include <cbang/util/Resource.h>
 #include <cbang/util/RateSet.h>
+#include <cbang/util/RateCollectionNS.h>
 
 #include <cbang/http/Headers.h>
 #include <cbang/http/Conn.h>
@@ -111,7 +112,9 @@ Server::Server(App &app) :
   options.alias("google-redirect-base", "oauth2-redirect-base");
 
   // HTTP rate stats
-  setStats(new RateSet(60));
+  auto &stats = app.getStats();
+  setStats(stats->getNS("net."));
+  app.getEventBase().getPool().setStats(stats->getNS("pool."));
 }
 
 
@@ -146,7 +149,7 @@ void Server::initHandlers() {
   auto sessionMan = PhonyPtr(&app.getSessionManager());
   addHandler(new HTTP::SessionHandler(sessionMan));
   addHandler(HTTP_GET, "/login", new OAuth2::LoginHandler
-            (app.getClient(), PhonyPtr(&googleOAuth2), sessionMan));
+    (app.getClient(), PhonyPtr(&googleOAuth2), sessionMan));
 
   // Redirect failed auth
   auto cb = [] (HTTP::Request &req) {
@@ -241,30 +244,6 @@ void Server::writeInfo(JSON::Sink &sink) const {
 }
 
 
-void Server::writeRates(JSON::Sink &sink) const {
-  sink.beginDict();
-
-  // Network rates
-  sink.insertDict("net");
-  auto &base = app.getEventBase();
-  sink.insert("receiving", base.getPool().getReadRate().get());
-  sink.insert("sending",   base.getPool().getWriteRate().get());
-  sink.endDict();
-
-  // HTTP event rates
-  sink.insertDict("http");
-  getStats()->insert(sink, true);
-  sink.endDict();
-
-  // Event rates
-  sink.insertDict("event");
-  app.getStats().insert(sink, true);
-  sink.endDict();
-
-  sink.endDict();
-}
-
-
 void Server::writeStats(JSON::Sink &sink) const {
   sink.beginDict();
 
@@ -272,27 +251,18 @@ void Server::writeStats(JSON::Sink &sink) const {
   sink.insert("connections", getConnections().size());
 
   // Rates
-  sink.beginInsert("rates");
-  writeRates(sink);
+  sink.insertDict("rates");
+  app.getStats()->insert(sink, true);
+  sink.endDict();
+
+  sink.insertDict("rate_log");
+  app.getRateTracker()->insert(sink);
+  sink.endDict();
 
   // Log errors & warnings
   sink.beginInsert("log");
   Logger::instance().writeRates(sink);
   sink.endDict();
-
-  // Events
-  sink.insertDict("events");
-  auto &base = app.getEventBase();
-  sink.insert("total",  base.getNumEvents());
-  sink.insert("active", base.getNumActiveEvents());
-
-  map<int, unsigned> counts;
-  base.countActiveEventsByPriority(counts);
-
-  for (auto it = counts.begin(); it != counts.end(); it++)
-    sink.insert(String::printf("priority-%u", it->first), it->second);
-
-  sink.endDict(); // events
 
   sink.endDict();
 }

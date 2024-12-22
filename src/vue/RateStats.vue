@@ -27,7 +27,7 @@ export default {
       th Total
 
     tr(v-for="(stat, key) in stats")
-      td {{key}}
+      td {{key.toLowerCase()}}
       td {{format_rate(key, stat)}}
       td
         span(v-if="stat.total") {{stat.total.toLocaleString()}}

@@ -8,14 +8,17 @@
   "repository": "github:FoldingAtHome/fah-node",
   "homepage": "https://foldingathome.org/",
   "license": "GPL-3.0-or-later",
-  "bugs": {"url": "https://github.com/FoldingAtHome/fah-node/issues"},
-
+  "bugs": {
+    "url": "https://github.com/FoldingAtHome/fah-node/issues"
+  },
   "scripts": {
     "build": "node build.js",
     "watch": "node build.js --watch"
   },
   "dependencies": {
+    "chart.js": "^4.4.7",
     "vue": "^3.2.37",
+    "vue-chartjs": "^5.3.2",
     "vue-router": "^4.0.16"
   },
   "devDependencies": {

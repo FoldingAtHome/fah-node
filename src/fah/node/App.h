@@ -35,6 +35,7 @@
 #include <cbang/acmev2/Account.h>
 #include <cbang/event/Base.h>
 #include <cbang/event/Event.h>
+#include <cbang/event/RateTracker.h>
 #include <cbang/http/Client.h>
 #include <cbang/http/SessionManager.h>
 #include <cbang/openssl/Certificate.h>
@@ -48,8 +49,6 @@
 #include <map>
 
 
-namespace cb {namespace Event {class Event;}}
-
 namespace FAH {
   namespace Node {
     class Server;
@@ -62,7 +61,8 @@ namespace FAH {
       cb::KeyPair privateKey;
       cb::ACMEv2::Account account;
       cb::HTTP::SessionManager sessionManager;
-      cb::RateSet stats;
+      cb::SmartPointer<cb::RateSet> stats;
+      cb::SmartPointer<cb::Event::RateTracker> rateTracker;
 
       Server *server;
       typedef std::map<std::string, cb::SmartPointer<Account> > accounts_t;
@@ -80,11 +80,13 @@ namespace FAH {
 
       static bool _hasFeature(int feature);
 
-      cb::Event::Base    &getEventBase()            {return base;}
-      cb::HTTP::Client   &getClient()               {return client;}
+      cb::Event::Base          &getEventBase()      {return base;}
+      cb::HTTP::Client         &getClient()         {return client;}
       cb::HTTP::SessionManager &getSessionManager() {return sessionManager;}
-      cb::RateSet        &getStats()                {return stats;}
-      Server             &getServer()               {return *server;}
+      const cb::SmartPointer<cb::RateSet> &getStats() {return stats;}
+      const cb::SmartPointer<cb::Event::RateTracker> &getRateTracker()
+      {return rateTracker;}
+      Server                   &getServer()         {return *server;}
 
       const cb::SmartPointer<Account> &getAccount(const std::string &id);
 

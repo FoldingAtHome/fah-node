@@ -61,7 +61,9 @@ namespace FAH {
 App::App() :
   ServerApplication("Folding@home Node Server", App::_hasFeature),
   base(true, 16), client(base, new SSLContext), account(client),
-  sessionManager(options), stats(60), server(new Server(*this)) {
+  sessionManager(options), stats(new RateSet(60)),
+  rateTracker(new Event::RateTracker(base, stats, 60 * 24 * 7, 60)),
+  server(new Server(*this)) {
 
   // Init Debugger before threads start
   Debugger::getStackTrace();
@@ -322,7 +324,7 @@ void App::signalEvent(Event::Event &e, int signal, unsigned flags) {
 
 
 void App::moveLogsEvent() {
-  stats.event("move-logs");
+  stats->event("move-logs");
   string dir = options["move-log-dir"];
   SystemUtilities::ensureDirectory(dir);
 

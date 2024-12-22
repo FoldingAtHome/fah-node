@@ -52,12 +52,12 @@ RemoteWS::~RemoteWS() {}
 void RemoteWS::onMessage(const JSON::ValuePtr &msg) {
   string type = msg->getString("type", "");
   onMessage(type, msg);
-  app.getStats().event(getWSType() + "-msg-" + type);
+  app.getStats()->event(getWSType() + "-msg-" + type);
 }
 
 
 void RemoteWS::onComplete() {
-  app.getStats().event(getWSType() + "-disconnect");
+  app.getStats()->event(getWSType() + "-disconnect");
   app.getServer().remove(*this);
 }
 
