@@ -39,12 +39,12 @@ tr
   td.id             {{c.id}}
   td.status         {{status}}
   td.https          {{c.https ? 'yes' : 'no'}}
-  td.bytes_in       {{$filters.size(c.bytes_in)}}
-  td.bytes_out      {{$filters.size(c.bytes_out)}}
-  td.rate           {{$filters.size(c.rate)}}/s
-  td.length         {{$filters.size(c.length)}}
-  td.duration: span {{$filters.duration(c.duration)}}
-  td.eta:      span {{$filters.duration(c.eta)}}
+  td.bytes_in       {{$util.human_size(c.bytes_in)}}
+  td.bytes_out      {{$util.human_size(c.bytes_out)}}
+  td.rate           {{$util.human_size(c.rate)}}/s
+  td.length         {{$util.human_size(c.length)}}
+  td.duration: span {{$util.human_duration(c.duration)}}
+  td.eta:      span {{$util.human_duration(c.eta)}}
   td.progress: ProgressBar(v-if="c.progress", :value="c.progress")
 </template>
 

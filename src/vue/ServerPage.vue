@@ -8,7 +8,7 @@ export default {
 
 
   async mounted() {
-    this.info = await this.$api.request('info')
+    this.info = await this.$ws.request('info')
   }
 }
 </script>

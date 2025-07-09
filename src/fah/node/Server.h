@@ -32,6 +32,7 @@
 #include <cbang/util/ACLSet.h>
 #include <cbang/json/JSON.h>
 #include <cbang/oauth2/GoogleProvider.h>
+#include <cbang/ws/Websocket.h>
 
 #include <cstdint>
 #include <string>
@@ -42,6 +43,7 @@ namespace FAH {
   namespace Node {
     class App;
     class RemoteWS;
+    class APIWebsocket;
 
     class Server : public cb::HTTP::Server {
     protected:
@@ -49,26 +51,19 @@ namespace FAH {
       cb::OAuth2::GoogleProvider googleOAuth2;
       cb::ACLSet aclSet;
 
-      typedef cb::SmartPointer<cb::HTTP::Request> RequestPtr;
-      std::map<uint64_t, RequestPtr> websockets;
+      using WebsocketPtr = cb::WS::WebsocketPtr;
+      std::map<uint64_t, WebsocketPtr> websockets;
 
     public:
       Server(App &app);
       ~Server();
 
-      const RequestPtr &add(const RequestPtr &ws);
-      void remove(const cb::HTTP::Request &ws);
+      const WebsocketPtr &add(const WebsocketPtr &ws);
+      void remove(const cb::WS::Websocket &ws);
 
       void initSSL(cb::SSLContext &ctx);
       void initHandlers();
       void init();
-
-      // From cb::HTTP::Server
-      using cb::HTTP::Server::init;
-      cb::SmartPointer<cb::HTTP::Request> createRequest
-      (const cb::SmartPointer<cb::HTTP::Conn> &connection,
-       cb::HTTP::Method method, const cb::URI &uri,
-       const cb::Version &version) override;
 
       void writeServer     (cb::JSON::Sink &sink) const;
       void writeInfo       (cb::JSON::Sink &sink) const;
@@ -76,23 +71,26 @@ namespace FAH {
       void writeConnections(cb::JSON::Sink &sink) const;
       void writeHelp       (cb::JSON::Sink &sink) const;
 
-    protected:
-      typedef cb::HTTP::Request EReq;
-      typedef cb::JSON::ValuePtr JVP;
+      using cb::HTTP::Server::init;
 
-      bool apiCORS         (EReq &req);
-      bool apiNotFound     (EReq &req);
-      bool apiXFrameOptions(EReq &req);
-      void apiLogout       (EReq &req, const JVP &msg);
-      void apiServer       (EReq &req, const JVP &msg);
-      void apiInfo         (EReq &req, const JVP &msg);
-      void apiStats        (EReq &req, const JVP &msg);
-      void apiConnections  (EReq &req, const JVP &msg);
-      void apiHelp         (EReq &req, const JVP &msg);
+    protected:
+      using Request  = cb::HTTP::Request;
+      using ValuePtr = cb::JSON::ValuePtr;
+
+      bool apiCORS         (Request &req);
+      bool websocket       (Request &req);
+      bool apiNotFound     (Request &req);
+      bool apiXFrameOptions(Request &req);
+      void apiLogout       (Request &req, const ValuePtr &msg);
+      void apiServer       (Request &req, const ValuePtr &msg);
+      void apiInfo         (Request &req, const ValuePtr &msg);
+      void apiStats        (Request &req, const ValuePtr &msg);
+      void apiConnections  (Request &req, const ValuePtr &msg);
+      void apiHelp         (Request &req, const ValuePtr &msg);
 
       // Webpage handler methods
-      bool forceSecure     (EReq &req);
-      bool loginPage       (EReq &req);
+      bool forceSecure     (Request &req);
+      bool loginPage       (Request &req);
     };
   }
 }

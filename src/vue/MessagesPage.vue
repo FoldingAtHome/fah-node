@@ -46,7 +46,7 @@ export default {
   methods: {
     async update() {
       try {
-        this.stats = await this.$api.request('stats')
+        this.stats = await this.$ws.request('stats')
 
       } catch (e) {
       } finally {

@@ -44,6 +44,10 @@ export default {
   th
     text-align left
 
-  td:nth-child(n + 2)
-    text-align right
+  td
+    font-family courier
+    white-space pre
+
+    &:nth-child(n + 2)
+      text-align right
 </style>

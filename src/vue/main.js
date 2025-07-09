@@ -11,9 +11,8 @@
 \******************************************************************************/
 
 import {createApp}    from 'vue'
-import filters        from './filters'
 import util           from './util'
-import API            from './api'
+import Socket         from './socket'
 import router         from './router'
 import App            from './App.vue'
 import RateStats      from './RateStats.vue'
@@ -21,12 +20,11 @@ import CountStats     from './CountStats.vue'
 
 let app = createApp(App)
 
-app.config.globalProperties.$filters = filters
-app.config.globalProperties.$util    = util
-app.config.globalProperties.$api     = new API()
+app.config.globalProperties.$util = util
+app.config.globalProperties.$ws   = new Socket()
 
-app.component('RateStats',      RateStats)
-app.component('CountStats',     CountStats)
+app.component('RateStats',  RateStats)
+app.component('CountStats', CountStats)
 
 app.use(router)
 

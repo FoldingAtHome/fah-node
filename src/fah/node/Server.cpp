@@ -121,12 +121,12 @@ Server::Server(App &app) :
 Server::~Server() {}
 
 
-const SmartPointer<HTTP::Request> &Server::add(const RequestPtr &ws) {
+const Server::WebsocketPtr &Server::add(const WebsocketPtr &ws) {
   return websockets[ws->getID()] = ws;
 }
 
 
-void Server::remove(const HTTP::Request &ws) {websockets.erase(ws.getID());}
+void Server::remove(const WS::Websocket &ws) {websockets.erase(ws.getID());}
 
 
 void Server::initSSL(SSLContext &ctx) {
@@ -141,10 +141,6 @@ void Server::initSSL(SSLContext &ctx) {
 
 
 void Server::initHandlers() {
-  // API Event::HTTP request callbacks
-#define ADD_HANDLER(METHODS, PATTERN, FUNC)                      \
-  addMember<Server>(METHODS, PATTERN, this, &Server::FUNC)
-
   // Auth, order is important here
   auto sessionMan = PhonyPtr(&app.getSessionManager());
   addHandler(new HTTP::SessionHandler(sessionMan));
@@ -159,17 +155,24 @@ void Server::initHandlers() {
   };
   addHandler(new HTTP::ACLHandler(aclSet, cb));
 
-  ADD_HANDLER(HTTP_ANY, "^/((login)|(admin))$", forceSecure);
-  ADD_HANDLER(HTTP_GET, ".*",                   apiXFrameOptions);
-  ADD_HANDLER(HTTP_GET, "/login",               loginPage);
-  ADD_HANDLER(HTTP_ANY, "/api/.*",              apiCORS);
-  ADD_HANDLER(HTTP_GET, "/api/server",          apiServer);
-  ADD_HANDLER(HTTP_GET, "/api/info",            apiInfo);
-  ADD_HANDLER(HTTP_GET, "/api/stats",           apiStats);
-  ADD_HANDLER(HTTP_GET, "/api/connections",     apiConnections);
-  ADD_HANDLER(HTTP_GET, "/api/help",            apiHelp);
-  ADD_HANDLER(HTTP_PUT, "/api/logout",          apiLogout);
-  ADD_HANDLER(HTTP_ANY, "/api/.*",              apiNotFound);
+  // API Event::HTTP request callbacks
+#define ADD_MEMBER(METHODS, PATTERN, FUNC)                      \
+  addMember<Server>(METHODS, PATTERN, this, &Server::FUNC)
+
+  ADD_MEMBER(HTTP_ANY, "^/((login)|(admin))$", forceSecure);
+  ADD_MEMBER(HTTP_GET, ".*",                   apiXFrameOptions);
+  ADD_MEMBER(HTTP_GET, "/login",               loginPage);
+  ADD_MEMBER(HTTP_GET, "/ws/client",           websocket);
+  ADD_MEMBER(HTTP_GET, "/ws/account",          websocket);
+  ADD_MEMBER(HTTP_GET, "/api/ws",              websocket);
+  ADD_MEMBER(HTTP_ANY, "/api/.*",              apiCORS);
+  ADD_MEMBER(HTTP_GET, "/api/server",          apiServer);
+  ADD_MEMBER(HTTP_GET, "/api/info",            apiInfo);
+  ADD_MEMBER(HTTP_GET, "/api/stats",           apiStats);
+  ADD_MEMBER(HTTP_GET, "/api/connections",     apiConnections);
+  ADD_MEMBER(HTTP_GET, "/api/help",            apiHelp);
+  ADD_MEMBER(HTTP_PUT, "/api/logout",          apiLogout);
+  ADD_MEMBER(HTTP_ANY, "/api/.*",              apiNotFound);
 
   // Add Web page handlers
   auto &options = app.getOptions();
@@ -214,27 +217,10 @@ void Server::init() {
 }
 
 
-SmartPointer<HTTP::Request> Server::createRequest
-(const cb::SmartPointer<cb::HTTP::Conn> &connection,
- HTTP::Method method, const URI &uri, const Version &version) {
-  if (method == HTTP_GET && uri.getPath() == "/ws/client")
-    return add(new ClientWS(app, connection, uri, version));
-
-  if (method == HTTP_GET && uri.getPath() == "/ws/account")
-    return add(new AccountWS(app, connection, uri, version));
-
-  if (method == HTTP_GET && uri.getPath() == "/api/ws")
-    return add(new APIWebsocket(app, connection, uri, version));
-
-  return HTTP::Server::createRequest(connection, method, uri, version);
-}
-
-
 void Server::writeServer(JSON::Sink &sink) const {
   sink.beginDict();
   sink.insert("version", app.getVersion().toString());
-  sink.insert("uptime", app.getUptime());
-  sink.insert("time", Time().toString());
+  sink.insert("started", Time(app.getStartTime()).toString());
   sink.endDict();
 }
 
@@ -256,13 +242,12 @@ void Server::writeStats(JSON::Sink &sink) const {
   sink.endDict();
 
   sink.insertDict("rate_log");
-  app.getRateTracker()->insert(sink);
+  //app.getRateTracker()->insert(sink); TODO
   sink.endDict();
 
   // Log errors & warnings
   sink.beginInsert("log");
   Logger::instance().writeRates(sink);
-  sink.endDict();
 
   sink.endDict();
 }
@@ -330,6 +315,21 @@ bool Server::apiCORS(HTTP::Request &req) {
 }
 
 
+bool Server::websocket(HTTP::Request &req) {
+  SmartPointer<WS::Websocket> ws;
+  auto &path = req.getURI().getPath();
+
+  if (path == "/ws/client")  ws = new ClientWS(app);
+  if (path == "/ws/account") ws = new AccountWS(app);
+  if (path == "/api/ws")     ws = new APIWebsocket(app);
+
+  ws->upgrade(req);
+  add(ws);
+
+  return true;
+}
+
+
 bool Server::apiNotFound(HTTP::Request &req) {
   req.sendJSONError(HTTP_NOT_FOUND, "API endpoint not found");
   return true;
@@ -350,27 +350,27 @@ bool Server::apiXFrameOptions(HTTP::Request &req) {
 
 
 void Server::apiServer(HTTP::Request &req, const JSON::ValuePtr &msg) {
-  writeServer(*req.getJSONWriter());
+  req.send([&] (JSON::Sink &sink) {writeServer(sink);});
 }
 
 
 void Server::apiInfo(HTTP::Request &req, const JSON::ValuePtr &msg) {
-  writeInfo(*req.getJSONWriter());
+  req.send([&] (JSON::Sink &sink) {writeInfo(sink);});
 }
 
 
 void Server::apiStats(HTTP::Request &req, const JSON::ValuePtr &msg) {
-  writeStats(*req.getJSONWriter());
+  req.send([&] (JSON::Sink &sink) {writeStats(sink);});
 }
 
 
 void Server::apiConnections(HTTP::Request &req, const JSON::ValuePtr &msg) {
-  writeConnections(*req.getJSONWriter());
+  req.send([&] (JSON::Sink &sink) {writeConnections(sink);});
 }
 
 
 void Server::apiHelp(HTTP::Request &req, const JSON::ValuePtr &msg) {
-  writeHelp(*req.getJSONWriter());
+  req.send([&] (JSON::Sink &sink) {writeHelp(sink);});
 }
 
 

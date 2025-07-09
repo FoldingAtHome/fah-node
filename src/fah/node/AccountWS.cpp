@@ -95,7 +95,7 @@ void AccountWS::onOpen() {
 }
 
 
-void AccountWS::onComplete() {
-  if (account.isSet()) account->removeAccount(sid);
-  RemoteWS::onComplete();
+void AccountWS::onClose(WS::Status status, const string &msg) {
+ if (account.isSet()) account->removeAccount(sid);
+ RemoteWS::onClose(status, msg);
 }

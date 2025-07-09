@@ -47,8 +47,8 @@ namespace FAH {
       void onMessage(
         const std::string &type, const cb::JSON::ValuePtr &msg) override;
 
-      // From cb::HTTP::Request
-      void onComplete() override;
+      // From cb::WS::Websocket
+      void onShutdown() override;
     };
   }
 }

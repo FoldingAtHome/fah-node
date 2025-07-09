@@ -38,18 +38,17 @@ namespace FAH {
       App &app;
 
     public:
-      APIWebsocket(
-        App &app, const cb::SmartPointer<cb::HTTP::Conn> &connection,
-        const cb::URI &uri, const cb::Version &version);
+      APIWebsocket(App &app);
 
       // From cb::WS::JSONWebsocket
       void onMessage(const cb::JSON::ValuePtr &msg) override;
 
       // From cb::WS::Websocket
       void onOpen() override;
+      void onShutdown() override;
 
-      // From cb::HTTP::Request
-      void onComplete() override;
+    protected:
+      void sendMessage(const std::string &type, uint64_t id);
     };
   }
 }

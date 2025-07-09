@@ -1,45 +1,38 @@
 <script>
-import util from './util'
-
-
 export default {
   data() {
     return {
-      state: 'Connecting',
-      info: {}
+      connected: false,
+      info:  {},
+      tick:  0
     }
   },
 
 
-  mounted() {this.update()},
+  mounted() {
+    this.$ws.add_listener(this.websocket_event)
+    this.clock()
+  },
+
+
   unmounted() {clearTimeout(this.timer)},
 
 
   methods: {
-    async update() {
-      try {
-        let info = await this.$api.request('server')
+    clock() {
+      this.tick++
+      this.timer = setTimeout(() => this.clock(), 250)
+    },
 
-        this.info = info || {}
-        this.state = 'Connected'
 
-        info.start_time = moment().subtract(info.uptime, 'seconds')
-          .format('MMM Do, YYYY HH:mm:ss')
-        info.started = moment().subtract(info.uptime, 'seconds').fromNow()
-        info.date = moment(info.time).format('MMM Do, YYYY')
-        info.time = moment(info.time).format('HH:mm:ss')
-
-      } catch (e) {
-        this.state = 'Disconnected'
-
-      } finally {
-        this.timer = setTimeout(this.update, 5000)
-      }
+    async websocket_event(type) {
+      if (type == 'open') this.info = await this.$ws.request('server')
+      this.connected = type != 'close'
     },
 
 
     async logout() {
-      await this.$api.put('logout')
+      await fetch('/api/logout', {method: 'PUT'})
       location.href = '/'
     }
   }
@@ -59,18 +52,18 @@ export default {
       strong#message
 
     table.server-info
-      tr
-        th Version:
+      tr(v-if='connected')
+        th Version
         td v{{info.version}}
+
+      tr(v-if='connected')
+        th Started
+        td(:title="info.started")
+          | {{$util.how_long_ago(info.started, tick)}} ago
+
       tr
-        th Started:
-        td(:title="info.start_time") {{info.started}}
-      tr
-        th Server Date:
-        td {{info.date}}
-      tr
-        th Server Time:
-        td {{info.time}}
+        th Status
+        td {{connected ? 'Connected' : 'Disconnected'}}
 
   #menu
     router-link(to="/admin/") Home
@@ -171,16 +164,17 @@ button
       text-transform capitalize
 
   .server-info
-     color #fff
+    color #fff
 
     td, th
-      white-space nowrap
+      white-space: pre
 
     th
       text-align right
       padding-right 5px
 
     td
+      font-family courier
       text-align left
 
 #menu

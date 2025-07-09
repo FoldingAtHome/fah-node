@@ -66,7 +66,7 @@ export default {
   methods: {
     async update() {
       try {
-        this.connections = await this.$api.request('connections')
+        this.connections = await this.$ws.request('connections')
         this.loading = false
 
       } catch (e) {
@@ -120,6 +120,7 @@ div
       min-width 10em
 
   th
+    text-align left
     cursor pointer
 
   .totals

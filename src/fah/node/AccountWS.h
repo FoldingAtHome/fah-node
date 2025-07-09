@@ -57,9 +57,7 @@ namespace FAH {
 
       // From cb::WS::Websocket
       void onOpen() override;
-
-      // From cb::HTTP::Request
-      void onComplete() override;
+      void onClose(cb::WS::Status status, const std::string &msg) override;
     };
   }
 }

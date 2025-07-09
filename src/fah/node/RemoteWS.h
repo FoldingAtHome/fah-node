@@ -44,9 +44,7 @@ namespace FAH {
       cb::SmartPointer<Account> account;
 
     public:
-      RemoteWS(
-        App &app, const cb::SmartPointer<cb::HTTP::Conn> &connection,
-        const cb::URI &uri, const cb::Version &version);
+      RemoteWS(App &app);
       ~RemoteWS();
 
       const std::string &getID() const {return id;}
@@ -64,8 +62,8 @@ namespace FAH {
       using cb::WS::JSONWebsocket::onMessage;
       void onMessage(const cb::JSON::ValuePtr &msg) override;
 
-      // From cb::HTTP::Request
-      void onComplete() override;
+      // From cb::WS::Websocket
+      void onShutdown() override;
 
     protected:
       void onLogin(const cb::JSON::ValuePtr &msg);

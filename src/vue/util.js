@@ -10,38 +10,47 @@
 
 \******************************************************************************/
 
+const durations = [
+  [60 * 60 * 24 * 365, 'y', 0],
+  [60 * 60 * 24,       'd', 3],
+  [60 * 60,            'h', 2],
+  [60,                 'm', 2],
+  [1,                  's', 2],
+]
+
+
+function pad_left(x, width, pad = ' ') {
+  let s = '' + x
+  while (s.length < width) s = pad + s
+  return s
+}
+
+
+function _duration(t, index, parts, force = false) {
+  if (durations.length <= index || parts <= 0 || t < 0 || !isFinite(t)) return
+
+  const [secs, unit, width] = durations[index]
+  if (!force && t < secs) return _duration(t, index + 1, parts)
+
+  let s    = Math.floor(t / secs) + unit
+  let rest = _duration(t % secs, index + 1, parts - 1, true)
+  if (rest) s += ' ' + pad_left(rest, width + 1)
+
+  return s
+}
+
 
 export default {
-  pad_num(n, width) {
-    let s = '' + n
-
-    for (let i = 1; i < width; i++) {
-      if (n < 10) s = '0' + s
-      else n = Math.floor(n / 10)
-    }
-
-    return s
+  how_long_ago(t) {
+    let d = (new Date().getTime() - new Date(t).getTime()) / 1000
+    return this.human_duration(d)
   },
 
 
-  human_duration(t) {
-    if (t == undefined) return 'unknown'
-    if (t == Infinity)  return t
-
-    let s = ''
-
-    let sec  = Math.floor(t % 60); t = Math.floor(t / 60)
-    let min  = t % 60;  t = Math.floor(t / 60)
-    let hour = t % 24;  t = Math.floor(t / 24)
-    let day  = t % 365; t = Math.floor(t / 365)
-
-    if (t)                    s += t + 'y '
-    if (day)                  s += day + 'd '
-    if (!t    && hour)        s += this.pad_num(hour, s ? 2 : 0) + 'h '
-    if (!day  && min)         s += this.pad_num(min,  s ? 2 : 0) + 'm '
-    if (!hour && (sec || !s)) s += this.pad_num(sec,  s ? 2 : 0) + 's'
-
-    return s.trim()
+  human_duration(t, parts = 2) {
+    if (t == Infinity) return t
+    if (t < 0 || !isFinite(t)) return 'unknown'
+    return _duration(t, 0, parts)
   },
 
 

@@ -40,12 +40,7 @@ using namespace cb;
 using namespace FAH::Node;
 
 
-RemoteWS::RemoteWS(
-  App &app, const SmartPointer<HTTP::Conn> &connection,
-  const URI &uri, const Version &version) :
-  cb::WS::JSONWebsocket(connection, uri, version), app(app) {}
-
-
+RemoteWS::RemoteWS(App &app) : app(app) {}
 RemoteWS::~RemoteWS() {}
 
 
@@ -56,7 +51,7 @@ void RemoteWS::onMessage(const JSON::ValuePtr &msg) {
 }
 
 
-void RemoteWS::onComplete() {
+void RemoteWS::onShutdown() {
   app.getStats()->event(getWSType() + "-disconnect");
   app.getServer().remove(*this);
 }

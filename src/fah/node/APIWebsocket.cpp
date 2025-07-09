@@ -31,7 +31,6 @@
 #include "App.h"
 #include "Server.h"
 
-#include <cbang/json/Builder.h>
 #include <cbang/http/Conn.h>
 
 using namespace std;
@@ -39,36 +38,32 @@ using namespace cb;
 using namespace FAH::Node;
 
 
-APIWebsocket::APIWebsocket(
-  App &app, const SmartPointer<HTTP::Conn> &connection, const URI &uri,
-  const Version &version) :
-  cb::WS::JSONWebsocket(connection, uri, version), app(app) {}
+APIWebsocket::APIWebsocket(App &app) : app(app) {}
 
 
 void APIWebsocket::onMessage(const JSON::ValuePtr &msg) {
-  JSON::Builder builder;
-  builder.beginDict();
-  builder.insert("id", *msg->get("id"));
-  builder.beginInsert("data");
-
-  auto &server = app.getServer();
-  string req   = msg->getString("request");
-  if (req == "server")      server.writeServer(builder);
-  if (req == "info")        server.writeInfo(builder);
-  if (req == "stats")       server.writeStats(builder);
-  if (req == "connections") server.writeConnections(builder);
-  if (req == "help")        server.writeHelp(builder);
-
-  builder.endDict();
-
-  send(*builder.getRoot());
+  sendMessage(msg->getString("request"), msg->getU64("id"));
 }
 
 
-void APIWebsocket::onOpen() {
-  // Clear Connection TTL
-  getConnection()->setTTL(0);
+void APIWebsocket::onOpen() {getConnection()->setTTL(0);} // Live forever
+void APIWebsocket::onShutdown() {app.getServer().remove(*this);}
+
+
+void APIWebsocket::sendMessage(const string &type, uint64_t id) {
+  send([&] (JSON::Sink &sink) {
+    sink.beginDict();
+    sink.insert("id", id);
+    sink.beginInsert("data");
+
+    auto &server = app.getServer();
+    if      (type == "server")      server.writeServer(sink);
+    else if (type == "info")        server.writeInfo(sink);
+    else if (type == "stats")       server.writeStats(sink);
+    else if (type == "connections") server.writeConnections(sink);
+    else if (type == "help")        server.writeHelp(sink);
+    else THROW("Unknown message type '" << type << "'");
+
+    sink.endDict();
+  });
 }
-
-
-void APIWebsocket::onComplete() {app.getServer().remove(*this);}

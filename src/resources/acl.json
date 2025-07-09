@@ -1,15 +1,12 @@
 {
   "acls": {
-    "/":                            {"groups": ["unauthenticated"]},
-
-    "/admin":                       {"groups": ["admin"]},
-    "/js":                          {"groups": ["admin"]},
-    "/css":                         {"groups": ["admin"]},
-    "/images":                      {"groups": ["admin"]},
-
-    "/api":                         {"groups": ["admin"]},
-    "/api/auth/logout":             {"groups": ["unauthenticated"]},
-
-    "/ws":                          {"groups": ["unauthenticated"]}
+    "/":                {"groups": ["unauthenticated"]},
+    "/admin":           {"groups": ["admin"]},
+    "/js":              {"groups": ["admin"]},
+    "/css":             {"groups": ["admin"]},
+    "/images":          {"groups": ["admin"]},
+    "/api":             {"groups": ["admin"]},
+    "/api/auth/logout": {"groups": ["unauthenticated"]},
+    "/ws":              {"groups": ["unauthenticated"]}
   }
 }

@@ -8,7 +8,7 @@ export default {
 
 
   async mounted() {
-    this.help = await this.$api.request('help')
+    this.help = await this.$ws.request('help')
     this.$nextTick(() => location.hash = location.hash)
   }
 }

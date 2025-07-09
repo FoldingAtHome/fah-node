@@ -82,7 +82,7 @@ void ClientWS::onMessage(const string &type, const JSON::ValuePtr &msg) {
 }
 
 
-void ClientWS::onComplete() {
+void ClientWS::onShutdown() {
   if (account.isSet()) account->removeClient(getID());
-  RemoteWS::onComplete();
+  RemoteWS::onShutdown();
 }
