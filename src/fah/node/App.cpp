@@ -77,7 +77,7 @@ App::App() :
   options["acmev2-base"].setDefault(ACMEv2::letsencrypt_base);
 
   options.pushCategory("Logging");
-  options.add("move-log-pattern", "Regular expression which matchs log files "
+  options.add("move-log-pattern", "Regular expression which matches log files "
               "which will be periodically moved to 'move-log-dir'.")
     ->setDefault("^.*\\.((CPUtime)|(Expired))\\.\\d+\\.log$");
   options.add("move-log-rate", "Rate in seconds at which to search for a move "
@@ -255,7 +255,7 @@ void App::initCerts() {
 
     string certPEM = db.get("self-cert", "");
     if (certPEM.empty()) {
-      LOG_WARNING("Generating self-signed certficate");
+      LOG_WARNING("Generating self-signed certificate");
 
       string cn = "localhost";
       if (!options["http-addresses"].toStrings().empty())
@@ -275,7 +275,7 @@ void App::initCerts() {
 
     } else cert = new Certificate(certPEM);
 
-    LOG_WARNING("Using self-signed certficate as web certificate");
+    LOG_WARNING("Using self-signed certificate as web certificate");
     sslCtx.usePrivateKey(privateKey);
     sslCtx.clearExtraChainCertificates();
     sslCtx.useCertificate(*cert);
