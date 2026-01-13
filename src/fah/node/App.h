@@ -3,7 +3,7 @@
                    This file is part of FoldingAtHome/fah-node
 
         The fah-node enables secure remote access to Folding@home clients.
-                      Copyright (c) 2023, foldingathome.org
+                    Copyright (c) 2023-2026, foldingathome.org
                                All rights reserved.
 
        This program is free software; you can redistribute it and/or modify

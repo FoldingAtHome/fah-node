@@ -4,7 +4,7 @@
   "description": "Folding@home is a distributed computing project using volunteered computer resources.\n\nfah-node can be used to authenticate, monitor and control your swarm of Folding@home clients remotely.",
   "author": "Joseph Coffland <joseph@cauldrondevelopment.com>",
   "org": "foldingathome.org",
-  "copyright": "foldingathome.org, 2023",
+  "copyright": "foldingathome.org, 2023-2026",
   "repository": "github:FoldingAtHome/fah-node",
   "homepage": "https://foldingathome.org/",
   "license": "GPL-3.0-or-later",
