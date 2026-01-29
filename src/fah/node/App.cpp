@@ -113,7 +113,7 @@ App::App() :
   base.getPool().setEventPriority(3);
 
   // Tasks
-  auto event = base.newEvent(this, &App::moveLogsEvent);
+  auto event = base.newEvent([this] {moveLogsEvent();});
   event->setPriority(3);
   event->add(options["move-log-rate"].toDouble());
   event->activate();
