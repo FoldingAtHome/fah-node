@@ -216,8 +216,8 @@ void App::initCerts() {
 
   if (db.has("private")) privateKey.readPrivatePEM(db.get("private"));
   else {
-    privateKey.generateRSA(4096, 65537,
-                           new KeyGenPacifier("Generating private key"));
+    privateKey.generateEC("prime256v1",
+      new KeyGenPacifier("Generating private key"));
     db.set("private", privateKey.privateToPEMString());
   }
   sslCtx.usePrivateKey(privateKey);
@@ -228,7 +228,7 @@ void App::initCerts() {
   {
    if (db.has("web-key")) webKey.readPrivatePEM(db.get("web-key"));
     else {
-      webKey.generateRSA(4096, 65537, new KeyGenPacifier("Generating web key"));
+      webKey.generateEC("prime256v1", new KeyGenPacifier("Generating web key"));
       db.set("web-key", webKey.privateToPEMString());
     }
     sslCtx.usePrivateKey(webKey);

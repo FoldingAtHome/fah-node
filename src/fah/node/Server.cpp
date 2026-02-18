@@ -202,7 +202,13 @@ void Server::init() {
   HTTP::Server::init(app.getOptions());
 
   // Init SSL
-  initSSL(*getSSLContext());
+  auto sslCtx = getSSLContext();
+
+  // These changes help reduce SSL handshake costs when clients reconnect
+  sslCtx->setSessionTimeout(Time::SEC_PER_WEEK); // Keep sessions
+  sslCtx->setSessionCacheSize(1 << 16);          // More sessions
+
+  initSSL(*sslCtx);
   initSSL(*app.getClient().getSSLContext());
 
   // Load ACL
