@@ -38,14 +38,22 @@ using namespace cb;
 using namespace FAH::Node;
 
 
-ClientWS::~ClientWS() {}
+ClientWS::ClientWS(App &app) : RemoteWS(app) {
+  app.getStats()->event("client-construct");
+}
+
+
+ClientWS::~ClientWS() {
+  app.getStats()->event(
+    "client-destruct" + string(account.isSet() ? "-logged-in" : ""));
+}
 
 
 void ClientWS::closeSession(const string &sid) {
   JSON::Dict msg;
   msg.insert("type", "session-close");
   msg.insert("session", sid);
-  send(msg);
+  TRY_CATCH_ERROR(send(msg));
 }
 
 
@@ -83,6 +91,6 @@ void ClientWS::onMessage(const string &type, const JSON::ValuePtr &msg) {
 
 
 void ClientWS::onShutdown() {
-  if (account.isSet()) account->removeClient(getID());
+  if (account.isSet()) TRY_CATCH_ERROR(account->removeClient(getID()));
   RemoteWS::onShutdown();
 }

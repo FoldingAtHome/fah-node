@@ -31,6 +31,7 @@
 #include "Account.h"
 #include "ClientWS.h"
 
+#include <cbang/Catch.h>
 #include <cbang/log/Logger.h>
 
 using namespace std;
@@ -38,14 +39,22 @@ using namespace cb;
 using namespace FAH::Node;
 
 
-AccountWS::~AccountWS() {}
+AccountWS::AccountWS(App &app) : RemoteWS(app) {
+  app.getStats()->event("account-construct");
+}
+
+
+AccountWS::~AccountWS() {
+  app.getStats()->event(
+    "account-destruct" + string(account.isSet() ? "-logged-in" : ""));
+}
 
 
 void AccountWS::connected(const ClientWS &client) {
   JSON::ValuePtr msg = new JSON::Dict;
   msg->insert("type", "connect");
   msg->insert("client", client.getLogin());
-  send(*msg);
+  TRY_CATCH_ERROR(send(*msg));
 }
 
 
@@ -53,7 +62,7 @@ void AccountWS::disconnected(const string &id) {
   JSON::ValuePtr msg = new JSON::Dict;
   msg->insert("type", "disconnect");
   msg->insert("id",   id);
-  send(*msg);
+  TRY_CATCH_ERROR(send(*msg));
 }
 
 
@@ -95,7 +104,7 @@ void AccountWS::onOpen() {
 }
 
 
-void AccountWS::onClose(WS::Status status, const string &msg) {
- if (account.isSet()) account->removeAccount(sid);
- RemoteWS::onClose(status, msg);
+void AccountWS::onShutdown() {
+ if (account.isSet()) TRY_CATCH_ERROR(account->removeAccount(sid));
+ RemoteWS::onShutdown();
 }

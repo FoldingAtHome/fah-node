@@ -4,6 +4,7 @@ After=network.target
 
 [Service]
 User=fah-node
+#Environment="MALLOC_CONF=prof:true,lg_prof_interval:30,prof_prefix:/var/log/fah-node/jeprof.out"
 ExecStart=/usr/bin/fah-node /etc/fah-node/config.xml
 WorkingDirectory=/var/lib/fah-node
 Restart=always

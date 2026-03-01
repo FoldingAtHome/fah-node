@@ -204,9 +204,9 @@ void Server::init() {
   // Init SSL
   auto sslCtx = getSSLContext();
 
-  // These changes help reduce SSL handshake costs when clients reconnect
-  sslCtx->setSessionTimeout(Time::SEC_PER_WEEK); // Keep sessions
-  sslCtx->setSessionCacheSize(1 << 16);          // More sessions
+  // Disable session caching and tickets
+  sslCtx->setSessionCacheMode(SSLContext::SSL_SESS_CACHE_OFF);
+  sslCtx->setOptions(SSLContext::SSL_OP_NO_TICKET);
 
   initSSL(*sslCtx);
   initSSL(*app.getClient().getSSLContext());
@@ -241,6 +241,7 @@ void Server::writeStats(JSON::Sink &sink) const {
 
   // Connection count
   sink.insert("connections", getConnections().size());
+  sink.insert("websockets",  websockets.size());
 
   // Rates
   sink.insertDict("rates");

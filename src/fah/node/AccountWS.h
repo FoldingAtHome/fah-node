@@ -42,7 +42,7 @@ namespace FAH {
       std::string sid;
 
     public:
-      using RemoteWS::RemoteWS;
+      AccountWS(App &app);
       ~AccountWS();
 
       const std::string &getSessionID() const {return sid;}
@@ -57,7 +57,7 @@ namespace FAH {
 
       // From cb::WS::Websocket
       void onOpen() override;
-      void onClose(cb::WS::Status status, const std::string &msg) override;
+      void onShutdown() override;
     };
   }
 }

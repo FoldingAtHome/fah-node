@@ -65,14 +65,22 @@ void RemoteWS::onLogin(const JSON::ValuePtr &msg) {
   // Verify signature
   KeyPair key;
   key.readPublicSPKI(Base64().decode(pubkey));
-  key.verifyBase64SHA256(signature, payload->toString(0, true));
+  try {
+    key.verifyBase64SHA256(signature, payload->toString(0, true));
+  } catch (const Exception &) {
+    app.getStats()->event(getWSType() + "-login-invalid");
+    throw;
+  }
+
 
   // Check timestamp is within allowed range
   uint64_t now = Time::now();
   uint64_t ts  = Time::parse(payload->getString("time"));
   const unsigned grace = 300;
-  if (ts < now - grace || now + grace < ts)
-    THROW("Login timestamp invalid: " << payload->getString("time"));
+  if (ts < now - grace || now + grace < ts) {
+    app.getStats()->event(getWSType() + "-login-stale");
+    THROW("Stale login timestamp: " << payload->getString("time"));
+  }
 
   // Compute ID from public key
   id = Digest::urlBase64(key.getRSA_N().toBinString(), "sha256");

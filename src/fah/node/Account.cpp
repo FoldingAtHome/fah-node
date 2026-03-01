@@ -76,7 +76,7 @@ void Account::add(const SmartPointer<AccountWS> &account) {
 
   // Send latest broadcasts
   for (auto p: broadcastMsgs)
-    account->send(*p.second);
+    TRY_CATCH_ERROR(account->send(*p.second));
 }
 
 
@@ -111,7 +111,7 @@ void Account::removeAccount(const string &sid) {
 
   // Send "session-close" message to any connected clients
   for (auto p: clients)
-    p.second->closeSession(sid);
+    TRY_CATCH_ERROR(p.second->closeSession(sid));
 }
 
 
@@ -123,7 +123,7 @@ void Account::removeClient(const string &id) {
 
   // Send "disconnect" message to any connected accounts
   for (auto p: accounts)
-    p.second->disconnected(id);
+    TRY_CATCH_ERROR(p.second->disconnected(id));
 }
 
 
@@ -147,8 +147,8 @@ void Account::broadcast(const JSON::ValuePtr &msg) {
 
   // Broadcast
   for (auto p: clients)
-    p.second->send(*msg);
+    TRY_CATCH_ERROR(p.second->send(*msg));
 
   for (auto p: accounts)
-    p.second->send(*msg);
+    TRY_CATCH_ERROR(p.second->send(*msg));
 }

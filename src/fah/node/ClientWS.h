@@ -37,7 +37,7 @@ namespace FAH {
 
     class ClientWS : public RemoteWS {
     public:
-      using RemoteWS::RemoteWS;
+      ClientWS(App &app);
       ~ClientWS();
 
       void closeSession(const std::string &sid);
