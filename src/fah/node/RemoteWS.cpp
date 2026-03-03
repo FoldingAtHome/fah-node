@@ -62,6 +62,17 @@ void RemoteWS::onLogin(const JSON::ValuePtr &msg) {
   string signature = msg->getString("signature");
   string pubkey    = msg->getString("pubkey");
 
+  // Check timestamp is within allowed range
+  // Note, we check the timestamp before checking the signature to avoid
+  // the expensive key verification for clients that are misconfigured
+  uint64_t now = Time::now();
+  uint64_t ts  = Time::parse(payload->getString("time"));
+  const unsigned grace = Time::SEC_PER_MIN * 15;
+  if (ts < now - grace || now + grace < ts) {
+    app.getStats()->event(getWSType() + "-login-stale");
+    THROW("Stale login timestamp: " << payload->getString("time"));
+  }
+
   // Verify signature
   KeyPair key;
   key.readPublicSPKI(Base64().decode(pubkey));
@@ -70,16 +81,6 @@ void RemoteWS::onLogin(const JSON::ValuePtr &msg) {
   } catch (const Exception &) {
     app.getStats()->event(getWSType() + "-login-invalid");
     throw;
-  }
-
-
-  // Check timestamp is within allowed range
-  uint64_t now = Time::now();
-  uint64_t ts  = Time::parse(payload->getString("time"));
-  const unsigned grace = 300;
-  if (ts < now - grace || now + grace < ts) {
-    app.getStats()->event(getWSType() + "-login-stale");
-    THROW("Stale login timestamp: " << payload->getString("time"));
   }
 
   // Compute ID from public key
