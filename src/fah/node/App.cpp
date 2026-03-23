@@ -59,7 +59,7 @@ namespace FAH {
 
 
 App::App() :
-  ServerApplication("Folding@home Node Server", App::_hasFeature),
+  Application("Folding@home Node Server"),
   base(true, 16), client(base, new SSLContext), account(client),
   sessionManager(options), stats(new RateSet(60)),
   rateTracker(new Event::RateTracker(base, stats, 60 * 24 * 7, 60)),
@@ -126,21 +126,6 @@ App::App() :
 App::~App() {delete server;}
 
 
-bool App::_hasFeature(int feature) {
-  switch (feature) {
-  case FEATURE_CHECK_OPEN_FILE_LIMIT:
-  case FEATURE_SERVER:
-  case FEATURE_INFO:
-    return true;
-
-  case FEATURE_SIGNAL_HANDLER:
-    return false;
-
-  default: return ServerApplication::_hasFeature(feature);
-  }
-}
-
-
 const SmartPointer<Account> &App::getAccount(const string &id) {
   // Clean up old accounts
   if (accountsClean == accounts.end()) accountsClean = accounts.begin();
@@ -161,8 +146,10 @@ LevelDB App::getDB(const string &ns) {return db.ns(ns);}
 
 
 int App::init(int argc, char *argv[]) {
-  int ret = ServerApplication::init(argc, argv);
+  int ret = Application::init(argc, argv);
   if (ret == -1) return ret;
+
+  checkOpenFileLimit();
 
   // Set up outgoing client
   if (options["bind-ip"].isSet())
@@ -203,7 +190,7 @@ void App::run() {
 
 
 void App::requestExit() {
-  ServerApplication::requestExit();
+  Application::requestExit();
   base.loopBreak();
 }
 

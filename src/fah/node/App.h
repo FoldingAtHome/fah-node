@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include <cbang/ServerApplication.h>
+#include <cbang/Application.h>
 #include <cbang/util/RateSet.h>
 #include <cbang/db/LevelDB.h>
 #include <cbang/json/Sink.h>
@@ -54,7 +54,7 @@ namespace FAH {
     class Server;
     class Account;
 
-    class App : public cb::ServerApplication {
+    class App : public cb::Application {
     protected:
       cb::Event::Base base;
       cb::HTTP::Client client;
@@ -77,8 +77,6 @@ namespace FAH {
     public:
       App();
       ~App();
-
-      static bool _hasFeature(int feature);
 
       cb::Event::Base          &getEventBase()      {return base;}
       cb::HTTP::Client         &getClient()         {return client;}
