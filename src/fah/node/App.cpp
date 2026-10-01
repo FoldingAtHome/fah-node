@@ -92,31 +92,20 @@ App::App() :
   options["log-thread-id"         ].setDefault(false);
   options["log-thread-prefix"     ].setDefault(true);
   options["log-short-level"       ].setDefault(true);
-  options["log-rotate"            ].setDefault(true);
-  options["log-rotate-max"        ].setDefault(256);
-  options["log-rotate-period"     ].setDefault(Time::SEC_PER_DAY);
-  options["log-rotate-compression"].setDefault("bzip2");
-
+  options["log-rotate"            ].setDefault(false); // logrotate.d
   options["session-cookie"        ].setDefault("fah_node_sid");
 
   // Enable libevent logging
   Event::Event::enableLogging(3);
 
-  // Handle exit signals
-  addSignalEvent(SIGINT);
-  addSignalEvent(SIGTERM);
-
-  // Ignore SIGPIPE
-  ::signal(SIGPIPE, SIG_IGN);
+  // Handle signals
+  addSignalEvent(SIGINT,  [this] {exitSignal();});
+  addSignalEvent(SIGTERM, [this] {exitSignal();});
+  addSignalEvent(SIGUSR1, [] {Logger::instance().restart();}); // logrotate.d
+  ::signal(SIGPIPE, SIG_IGN); // Ignore SIGPIPE
 
   // Priority
   base.getPool().setEventPriority(3);
-
-  // Tasks
-  auto event = base.newEvent([this] {moveLogsEvent();});
-  event->setPriority(3);
-  event->add(options["move-log-rate"].toDouble());
-  event->activate();
 
   // Info
   BuildInfo::addBuildInfo(getName().c_str());
@@ -276,8 +265,9 @@ void App::initCerts() {
 }
 
 
-void App::addSignalEvent(int sig) {
-  auto event = signalEvents[sig] = base.newSignal(sig, this, &App::signalEvent);
+void App::addSignalEvent(int sig, function<void ()> cb) {
+  auto name = String::printf("sig-%d", sig);
+  auto event = events[name] = base.newSignal(sig, cb);
   event->setPriority(0);
   event->add();
 }
@@ -288,40 +278,4 @@ void App::openDB() {
   const char *dbPath = "node.leveldb";
   LOG_INFO(1, "Accessing " << dbPath);
   db.open(dbPath, LevelDB::CREATE_IF_MISSING);
-}
-
-
-void App::signalEvent(Event::Event &e, int signal, unsigned flags) {
-  switch (signalCount++) {
-  case 0:
-    LOG_INFO(1, "Caught signal " << signal << ", requesting shutdown");
-    break;
-
-  case 1:
-    LOG_INFO(1, "Caught signal " << signal << ", next signal will terminate");
-    break;
-
-  case 2:
-    LOG_INFO(1, "Caught signal " << signal << ", terminating");
-    exit(1);
-  }
-
-  requestExit();
-}
-
-
-void App::moveLogsEvent() {
-  stats->event("move-logs");
-  string dir = options["move-log-dir"];
-  SystemUtilities::ensureDirectory(dir);
-
-  DirectoryWalker walker(".", options["move-log-pattern"], 1);
-
-  while (walker.hasNext()) {
-    string filename = walker.next();
-    int64_t age = Time::now() - SystemUtilities::getModificationTime(filename);
-    if (age < Time::SEC_PER_MIN * 30) continue;
-    SystemUtilities::rename(filename, dir + "/" + filename);
-    LOG_DEBUG(3, "Moved '" << filename << "' to '" << dir << "'");
-  }
 }

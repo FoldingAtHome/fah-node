@@ -71,8 +71,7 @@ namespace FAH {
 
       cb::LevelDB db;
 
-      unsigned signalCount = 0;
-      std::map<int, cb::SmartPointer<cb::Event::Event>> signalEvents;
+      std::map<std::string, cb::SmartPointer<cb::Event::Event>> events;
 
     public:
       App();
@@ -97,10 +96,8 @@ namespace FAH {
 
     private:
       void initCerts();
-      void addSignalEvent(int sig);
+      void addSignalEvent(int sig, std::function<void ()> cb);
       void openDB();
-      void signalEvent(cb::Event::Event &e, int signal, unsigned flags);
-      void moveLogsEvent();
     };
   }
 }
